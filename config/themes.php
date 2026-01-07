@@ -26,8 +26,8 @@ return [
         ],
         'Electro' => [
             'name'        => 'Electro',
-            'assets_path' => 'public/themes/shop/Electro',
-            'views_path'  => 'resources/themes/Electro/views',
+            'assets_path' => 'public/themes/shop/electro',
+            'views_path'  => 'resources/themes/electro/views',
 
             'vite'        => [
                 'hot_file'                 => 'shop-default-vite.hot',
