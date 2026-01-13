@@ -27,7 +27,7 @@ class BagistoApiService
         $response = Http::withHeaders([
             'Accept'        => 'application/json',
             'Authorization' => 'Bearer '.$this->token, // For authenticated endpoints
-        ])->get($this->baseUrl.$this->prefix.'/products'); // Example: hitting the products endpoint
+        ])->get($this->baseUrl.$this->prefix.'/products?limit=12'); // Example: hitting the products endpoint
 
         if ($response->failed()) {
             // Handle the error
@@ -43,7 +43,7 @@ class BagistoApiService
         $response = Http::withHeaders([
             'Accept'        => 'application/json',
             'Authorization' => 'Bearer '.$this->token, // For authenticated endpoints
-        ])->get($this->baseUrl.$this->prefix.'/products?featured=1?limit=6'); // Example: hitting the products endpoint
+        ])->get($this->baseUrl.$this->prefix.'/products?featured=1?limit=12'); // Example: hitting the products endpoint
 
         if ($response->failed()) {
             // Handle the error
@@ -52,6 +52,7 @@ class BagistoApiService
 
         return $response->json();
     }
+
     // //get categories
     public function getCategories()
     {
@@ -68,6 +69,66 @@ class BagistoApiService
         return $response->json();
     }
 
-    /////////////////////////
-    /// get categories
+    // ///////////////////////
+    // / get new products
+    // / /////////////////
+    public function getNewProducts()
+    {
+        $response = Http::withHeaders([
+            'Accept'        => 'application/json',
+            'Authorization' => 'Bearer '.$this->token, // For authenticated endpoints
+        ])->get($this->baseUrl.$this->prefix.'/products?sort=created_at?limit=12'); // Example: hitting the products endpoint
+
+        if ($response->failed()) {
+            // Handle the error
+            throw new Exception('API request failed: '.$response->status());
+        }
+
+        return $response->json();
+    }
+
+    // ///////////////////////
+    // / get product by id
+    // / /////////////////
+    public function getProduct($id)
+    {
+        if (! $id) {
+            // Handle the error
+            throw new Exception('API request failed: no product id provided');
+        }
+
+        $response = Http::withHeaders([
+            'Accept'        => 'application/json',
+            'Authorization' => 'Bearer '.$this->token, // For authenticated endpoints
+        ])->get($this->baseUrl.$this->prefix.'/v1/products/'.$id.'?includeReviews=true&includeRelated=true'); // Example: hitting the products endpoint
+
+        if ($response->failed()) {
+            // Handle the error
+            throw new Exception('API request failed: '.$response->status());
+        }
+
+        return $response->json();
+    }
+    // ///////////////////////
+    // / get product reviews
+    // / /////////////////
+    public function getProductReviews($id)
+    {
+        if (! $id) {
+            // Handle the error
+            throw new Exception('API request failed: no product id provided');
+        }
+
+        $response = Http::withHeaders([
+            'Accept'        => 'application/json',
+            'Authorization' => 'Bearer '.$this->token, // For authenticated endpoints
+        ])->get($this->baseUrl.$this->prefix.'/v1/products/'.$id.'/reviews'); // Example: hitting the products endpoint
+
+        if ($response->failed()) {
+            // Handle the error
+            throw new Exception('API request failed: '.$response->status());
+        }
+
+        return $response->json();
+    }
 }

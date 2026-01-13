@@ -113,11 +113,11 @@ English</small></a>
                         <input class="form-control border-0 rounded-pill w-100 py-3" type="text"
                             data-bs-target="#dropdownToggle123" placeholder="Search Looking For?">
                         <select class="form-select text-dark border-0 border-start rounded-0 p-3" style="width: 200px;">
-                            <option value="All Category">All Category</option>
-                            <option value="Pest Control-2">Category 1</option>
-                            <option value="Pest Control-3">Category 2</option>
-                            <option value="Pest Control-4">Category 3</option>
-                            <option value="Pest Control-5">Category 4</option>
+                            @isset($categories['data'])
+                                @foreach($categories['data'] as $category)
+                                    <option value="{{$category['id']}}}}">{{$category['name']}}</option>
+                                @endforeach
+                            @endisset
                         </select>
                         <button type="button" class="btn btn-primary rounded-pill py-3 px-5" style="border: 0;"><i
                                 class="fas fa-search"></i></button>
@@ -156,7 +156,6 @@ English</small></a>
                                         <li>
                                             <div class="categories-bars-item">
                                                 <a href="{{config('app.url')}}/category/{{$category['id']}}}}">{{$category['name']}}</a>
-                                                <span>(3)</span>
                                             </div>
                                         </li>
                                     @endforeach
@@ -180,15 +179,16 @@ English</small></a>
                     <div class="collapse navbar-collapse" id="navbarCollapse">
                         <div class="navbar-nav ms-auto py-0">
                             <a href="index.html" class="nav-item nav-link active">Home</a>
-                            <a href="shop.html" class="nav-item nav-link">Shop</a>
-                            <a href="single.html" class="nav-item nav-link">Single Page</a>
+                            <a href="shop.html" class="nav-item nav-link">Products</a>
+                            <a href="single.html" class="nav-item nav-link">About Us</a>
                             <div class="nav-item dropdown">
-                                <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
+                                <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Categories</a>
                                 <div class="dropdown-menu m-0">
-                                    <a href="bestseller.html" class="dropdown-item">Bestseller</a>
-                                    <a href="cart.html" class="dropdown-item">Cart Page</a>
-                                    <a href="cheackout.html" class="dropdown-item">Cheackout</a>
-                                    <a href="404.html" class="dropdown-item">404 Page</a>
+                                    @isset($categories['data'])
+                                        @foreach($categories['data'] as $category)
+                                            <a href="{{config('app.url')}}/category/{{$category['id']}}}}" class="dropdown-item">{{$category['name']}}</a>
+                                        @endforeach
+                                    @endisset
                                 </div>
                             </div>
                             <a href="contact.html" class="nav-item nav-link me-2">Contact</a>
@@ -200,8 +200,7 @@ English</small></a>
                                             @foreach($categories['data'] as $category)
                                                 <li>
                                                     <div class="categories-bars-item">
-                                                        <a href="#">{{$category['name']}}</a>
-                                                        <span>(3)</span>
+                                                        <a href="{{config('app.url')}}/category/{{$category['id']}}}}">{{$category['name']}}</a>
                                                     </div>
                                                 </li>
                                             @endforeach
