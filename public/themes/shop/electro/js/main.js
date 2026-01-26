@@ -10,8 +10,8 @@
         }, 1);
     };
     spinner(0);
-    
-    
+
+
     // Initiate the wowjs
     new WOW().init();
 
@@ -112,7 +112,7 @@
         autoplay: true,
         smartSpeed: 1500,
         dots: false,
-        loop: true,
+        loop: ( $('.owl-carousel .items').length > 5 ),
         margin: 25,
         nav : true,
         navText : [
@@ -158,7 +158,7 @@
     });
 
 
-    
+
    // Back to top button
    $(window).scroll(function () {
     if ($(this).scrollTop() > 300) {
@@ -173,7 +173,15 @@
     });
 
 
-   
+    ///ratings
+    $("#ratings").rating({
+        min: 0,
+        max: 5,
+        step: 1,
+        size: 'sm',
+        showClear: false
+    });
+
 
 })(jQuery);
 

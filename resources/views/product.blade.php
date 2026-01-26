@@ -1,17 +1,20 @@
 @include('partials.header')
 <!-- Single Page Header start -->
 <div class="container-fluid page-header py-5">
-    <h1 class="text-center text-white display-6 wow fadeInUp" data-wow-delay="0.1s">Single Product</h1>
+    <h1 class="text-center text-white display-6 wow fadeInUp" data-wow-delay="0.1s">
+        @isset($product)
+            {{$product['data']['name']}}
+        @endisset
+    </h1>
     <ol class="breadcrumb justify-content-center mb-0 wow fadeInUp" data-wow-delay="0.3s">
-        <li class="breadcrumb-item"><a href="#">Home</a></li>
-        <li class="breadcrumb-item"><a href="#">Products</a></li>
+        <li class="breadcrumb-item"><a href="{{route('shop.home.index')}}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{{route('shop.home.products')}}">Products</a></li>
         @isset($product)
         <li class="breadcrumb-item active text-white">{{$product['data']['name']}}</li>
         @endisset
     </ol>
 </div>
 <!-- Single Page Header End -->
-
 
 <!-- Single Products Start -->
 <div class="container-fluid shop py-5">
@@ -42,27 +45,30 @@
                 <div class="featured-product mb-4">
                     <h4 class="mb-3">Featured products</h4>
 
+                    @if(count($products['data'])>0)
+                        @foreach($products['data'] as $featuredProduct)
                     <div class="featured-product-item">
                         <div class="rounded me-4" style="width: 100px; height: 100px;">
-                            <img src="img/product-3.png" class="img-fluid rounded" alt="Image">
+                            <img src="{{$featuredProduct['images'][0]['original_image_url']}}" class="img-fluid rounded" alt="Image">
                         </div>
                         <div>
                             <h6 class="mb-2">SmartPhone</h6>
                             <div class="d-flex mb-2">
-                                <i class="fa fa-star text-secondary"></i>
-                                <i class="fa fa-star text-secondary"></i>
-                                <i class="fa fa-star text-secondary"></i>
-                                <i class="fa fa-star text-secondary"></i>
-                                <i class="fa fa-star"></i>
+                                <input  data-show-clear="false" type="text" class="rating" data-size="sm" value="{{$featuredProduct['ratings']['average']}}" disabled>
                             </div>
                             <div class="d-flex mb-2">
-                                <h5 class="fw-bold me-2">2.99 $</h5>
-                                <h5 class="text-danger text-decoration-line-through">4.11 $</h5>
+                                @if($featuredProduct['on_sale'])
+                                    <h5 class="fw-bold me-2">{{$featuredProduct['prices']['regular']['formatted_price']}}</h5>
+                                @endif
+                                    <h5 class="text-danger text-decoration-line-through">{{$featuredProduct['prices']['final']['formatted_price']}}</h5>
                             </div>
                         </div>
                     </div>
+                        @endforeach
+                    @endif
 
-                </div>
+
+                <!----promo start
                 <a href="#">
                     <div class="position-relative">
                         <img src="img/product-banner-2.jpg" class="img-fluid w-100 rounded" alt="Image">
@@ -74,20 +80,7 @@
                         </div>
                     </div>
                 </a>
-                <div class="product-tags my-4">
-                    <h4 class="mb-3">PRODUCT TAGS</h4>
-                    <div class="product-tags-items bg-light rounded p-3">
-                        <a href="#" class="border rounded py-1 px-2 mb-2">New</a>
-                        <a href="#" class="border rounded py-1 px-2 mb-2">brand</a>
-                        <a href="#" class="border rounded py-1 px-2 mb-2">black</a>
-                        <a href="#" class="border rounded py-1 px-2 mb-2">white</a>
-                        <a href="#" class="border rounded py-1 px-2 mb-2">tablats</a>
-                        <a href="#" class="border rounded py-1 px-2 mb-2">phone</a>
-                        <a href="#" class="border rounded py-1 px-2 mb-2">camera</a>
-                        <a href="#" class="border rounded py-1 px-2 mb-2">drone</a>
-                        <a href="#" class="border rounded py-1 px-2 mb-2">talevision</a>
-                        <a href="#" class="border rounded py-1 px-2 mb-2">slaes</a>
-                    </div>
+                --promo end -->
                 </div>
             </div>
             <div class="col-lg-7 col-xl-9 wow fadeInUp" data-wow-delay="0.1s">
@@ -111,11 +104,7 @@
                         <p class="mb-3">Category: Electronics</p>
                         <h5 class="fw-bold mb-3">{{$product['data']['formatted_price']}}</h5>
                         <div class="d-flex mb-4">
-                            <i class="fa fa-star text-secondary"></i>
-                            <i class="fa fa-star text-secondary"></i>
-                            <i class="fa fa-star text-secondary"></i>
-                            <i class="fa fa-star text-secondary"></i>
-                            <i class="fa fa-star"></i>
+                            <input data-show-clear="false" type="text" class="rating" data-size="sm" value="{{$product['data']['reviews']['average_rating']}}" disabled>
                         </div>
                         <div class="mb-3">
                             <div class="btn btn-primary d-inline-block rounded text-white py-1 px-4 me-2"><i
@@ -138,7 +127,7 @@
                                 @endif
                             </small>
                         </div>
-                        <p class="mb-4">{{$product['data']['short_description']}}</p>
+                        <p class="mb-4">{!!$product['data']['short_description']!!}</p>
                         <div class="input-group quantity mb-5" style="width: 100px;">
                             <div class="input-group-btn">
                                 <button class="btn btn-sm btn-minus rounded-circle bg-light border">
@@ -170,315 +159,142 @@
                         <div class="tab-content mb-5">
                             <div class="tab-pane active" id="nav-about" role="tabpanel"
                                  aria-labelledby="nav-about-tab">
-                                <p>{{$product['data']['description']}}
-                                </p>
+                                {!!$product['data']['description']!!}
 
-                            </div>
-                            <div class="tab-pane" id="nav-mission" role="tabpanel"
-                                 aria-labelledby="nav-mission-tab">
-                                <div class="d-flex">
-                                    <img src="img/avatar.jpg" class="img-fluid rounded-circle p-3"
-                                         style="width: 100px; height: 100px;" alt="">
-                                    <div class="">
-                                        <p class="mb-2" style="font-size: 14px;">April 12, 2024</p>
-                                        <div class="d-flex justify-content-between">
-                                            <h5>Jason Smith</h5>
-                                            <div class="d-flex mb-3">
-                                                <i class="fa fa-star text-secondary"></i>
-                                                <i class="fa fa-star text-secondary"></i>
-                                                <i class="fa fa-star text-secondary"></i>
-                                                <i class="fa fa-star text-secondary"></i>
-                                                <i class="fa fa-star"></i>
-                                            </div>
-                                        </div>
-                                        <p>The generated Lorem Ipsum is therefore always free from repetition
-                                            injected humour, or non-characteristic
-                                            words etc. Susp endisse ultricies nisi vel quam suscipit </p>
-                                    </div>
-                                </div>
-                                <div class="d-flex">
-                                    <img src="img/avatar.jpg" class="img-fluid rounded-circle p-3"
-                                         style="width: 100px; height: 100px;" alt="">
-                                    <div class="">
-                                        <p class="mb-2" style="font-size: 14px;">April 12, 2024</p>
-                                        <div class="d-flex justify-content-between">
-                                            <h5>Sam Peters</h5>
-                                            <div class="d-flex mb-3">
-                                                <i class="fa fa-star text-secondary"></i>
-                                                <i class="fa fa-star text-secondary"></i>
-                                                <i class="fa fa-star text-secondary"></i>
-                                                <i class="fa fa-star"></i>
-                                                <i class="fa fa-star"></i>
-                                            </div>
-                                        </div>
-                                        <p class="text-dark">The generated Lorem Ipsum is therefore always free from
-                                            repetition injected humour, or non-characteristic
-                                            words etc. Susp endisse ultricies nisi vel quam suscipit </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="tab-pane" id="nav-vision" role="tabpanel">
-                                <p class="text-dark">Tempor erat elitr rebum at clita. Diam dolor diam ipsum et
-                                    tempor sit. Aliqu diam
-                                    amet diam et eos labore. 3</p>
-                                <p class="mb-0">Diam dolor diam ipsum et tempor sit. Aliqu diam amet diam et eos
-                                    labore.
-                                    Clita erat ipsum et lorem et sit</p>
-                            </div>
-                        </div>
-                    </div>
-                    <form action="#">
-                        <h4 class="mb-5 fw-bold">Leave a Reply</h4>
-                        <div class="row g-4">
-                            <div class="col-lg-6">
-                                <div class="border-bottom rounded">
-                                    <input type="text" class="form-control border-0 me-4" placeholder="Yur Name *">
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="border-bottom rounded">
-                                    <input type="email" class="form-control border-0" placeholder="Your Email *">
-                                </div>
-                            </div>
-                            <div class="col-lg-12">
-                                <div class="border-bottom rounded my-4">
-                                        <textarea name="" id="" class="form-control border-0" cols="30" rows="8"
-                                                  placeholder="Your Review *" spellcheck="false"></textarea>
-                                </div>
-                            </div>
-                            <div class="col-lg-12">
-                                <div class="d-flex justify-content-between py-3 mb-5">
-                                    <div class="d-flex align-items-center">
-                                        <p class="mb-0 me-3">Please rate:</p>
-                                        <div class="d-flex align-items-center" style="font-size: 12px;">
-                                            <i class="fa fa-star text-muted"></i>
-                                            <i class="fa fa-star"></i>
-                                            <i class="fa fa-star"></i>
-                                            <i class="fa fa-star"></i>
-                                            <i class="fa fa-star"></i>
-                                        </div>
-                                    </div>
-                                    <a href="#"
-                                       class="btn btn-primary border border-secondary text-primary rounded-pill px-4 py-3">
-                                        Post Comment</a>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
+
+</div>
+
+                            <!--reviews start here -->
+<div class="tab-pane" id="nav-mission" role="tabpanel"
+ aria-labelledby="nav-mission-tab">
+
+    <!-- start single review -->
+    @if(count($reviews['data'])>0)
+        @foreach($reviews['data'] as $review)
+<div class="d-flex">
+    <img src="img/avatar.jpg" class="img-fluid rounded-circle p-3"
+         style="width: 100px; height: 100px;" alt="">
+    <div class="">
+        <p class="mb-2" style="font-size: 14px;">{{$review['created_at']}}</p>
+        <div class="d-flex justify-content-between">
+            <h5>{{$review['name']}}</h5>
+            <div class="d-flex mb-3">
+                <i class="fa fa-star text-secondary"></i>
+                {{$review['reviews']['average_rating']}}
             </div>
         </div>
+        <p>{!! $review['comment'] !!} </p>
     </div>
+</div>
+        @endforeach
+    @endif
+    <!--end single review-->
+
+</div>
+</div>
+</div>
+<form action="#">
+<h4 class="mb-5 fw-bold">Leave a Reply</h4>
+<div class="row g-4">
+<div class="col-lg-6">
+<div class="border-bottom rounded">
+    <input type="text" class="form-control border-0 me-4" placeholder="Yur Name *">
+</div>
+</div>
+<div class="col-lg-6">
+<div class="border-bottom rounded">
+    <input type="email" class="form-control border-0" placeholder="Your Email *">
+</div>
+</div>
+<div class="col-lg-12">
+<div class="border-bottom rounded my-4">
+        <textarea name="" id="" class="form-control border-0" cols="30" rows="8"
+                  placeholder="Your Review *" spellcheck="false"></textarea>
+</div>
+</div>
+<div class="col-lg-12">
+<div class="d-flex justify-content-between py-3 mb-5">
+    <div class="d-flex align-items-center">
+        <p class="mb-0 me-3">Please rate:</p>
+        <div class="d-flex align-items-center" style="font-size: 12px;">
+            <input id="ratings" data-show-clear="false" type="text" class="rating" data-size="sm"  >
+        </div>
+    </div>
+    <a href="#"
+       class="btn btn-primary border border-secondary text-primary rounded-pill px-4 py-3">
+        Post Comment</a>
+</div>
+</div>
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
 </div>
 <!-- Single Products End -->
 
 <!-- Related Product Start -->
 <div class="container-fluid related-product">
-    <div class="container">
-        <div class="mx-auto text-center pb-5" style="max-width: 700px;">
-            <h4 class="text-primary mb-4 border-bottom border-primary border-2 d-inline-block p-2 title-border-radius wow fadeInUp"
-                data-wow-delay="0.1s">Related Products</h4>
-            <p class="wow fadeInUp" data-wow-delay="0.2s">Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                Modi, asperiores ducimus sint quos tempore officia similique quia? Libero, pariatur consectetur?</p>
-        </div>
-        <div class="related-carousel owl-carousel pt-4">
-            <div class="related-item rounded">
-                <div class="related-item-inner border rounded">
-                    <div class="related-item-inner-item">
-                        <img src="img/product-3.png" class="img-fluid w-100 rounded-top" alt="">
-                        <div class="related-new">New</div>
-                        <div class="related-details">
-                            <a href="#"><i class="fa fa-eye fa-1x"></i></a>
-                        </div>
-                    </div>
-                    <div class="text-center rounded-bottom p-4">
-                        <a href="#" class="d-block mb-2">SmartPhone</a>
-                        <a href="#" class="d-block h4">Apple iPad Mini <br> G2356</a>
-                        <del class="me-2 fs-5">$1,250.00</del>
-                        <span class="text-primary fs-5">$1,050.00</span>
-                    </div>
-                </div>
-                <div class="related-item-add border border-top-0 rounded-bottom  text-center p-4 pt-0">
-                    <a href="#" class="btn btn-primary border-secondary rounded-pill py-2 px-4 mb-4"><i
-                            class="fas fa-shopping-cart me-2"></i> Add To Cart</a>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex">
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <div class="d-flex">
-                            <a href="#"
-                               class="text-primary d-flex align-items-center justify-content-center me-3"><span
-                                    class="rounded-circle btn-sm-square border"><i
-                                        class="fas fa-random"></i></i></a>
-                            <a href="#"
-                               class="text-primary d-flex align-items-center justify-content-center me-0"><span
-                                    class="rounded-circle btn-sm-square border"><i class="fas fa-heart"></i></a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="related-item rounded">
-                <div class="related-item-inner border rounded">
-                    <div class="related-item-inner-item">
-                        <img src="img/product-3.png" class="img-fluid w-100 rounded-top" alt="">
-                        <div class="related-new">New</div>
-                        <div class="related-details">
-                            <a href="#"><i class="fa fa-eye fa-1x"></i></a>
-                        </div>
-                    </div>
-                    <div class="text-center rounded-bottom p-4">
-                        <a href="#" class="d-block mb-2">SmartPhone</a>
-                        <a href="#" class="d-block h4">Apple iPad Mini <br> G2356</a>
-                        <del class="me-2 fs-5">$1,250.00</del>
-                        <span class="text-primary fs-5">$1,050.00</span>
-                    </div>
-                </div>
-                <div class="related-item-add border border-top-0 rounded-bottom  text-center p-4 pt-0">
-                    <a href="#" class="btn btn-primary border-secondary rounded-pill py-2 px-4 mb-4"><i
-                            class="fas fa-shopping-cart me-2"></i> Add To Cart</a>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex">
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <div class="d-flex">
-                            <a href="#"
-                               class="text-primary d-flex align-items-center justify-content-center me-3"><span
-                                    class="rounded-circle btn-sm-square border"><i
-                                        class="fas fa-random"></i></i></a>
-                            <a href="#"
-                               class="text-primary d-flex align-items-center justify-content-center me-0"><span
-                                    class="rounded-circle btn-sm-square border"><i class="fas fa-heart"></i></a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="related-item rounded">
-                <div class="related-item-inner border rounded">
-                    <div class="related-item-inner-item">
-                        <img src="img/product-3.png" class="img-fluid w-100 rounded-top" alt="">
-                        <div class="related-new">New</div>
-                        <div class="related-details">
-                            <a href="#"><i class="fa fa-eye fa-1x"></i></a>
-                        </div>
-                    </div>
-                    <div class="text-center rounded-bottom p-4">
-                        <a href="#" class="d-block mb-2">SmartPhone</a>
-                        <a href="#" class="d-block h4">Apple iPad Mini <br> G2356</a>
-                        <del class="me-2 fs-5">$1,250.00</del>
-                        <span class="text-primary fs-5">$1,050.00</span>
-                    </div>
-                </div>
-                <div class="related-item-add border border-top-0 rounded-bottom  text-center p-4 pt-0">
-                    <a href="#" class="btn btn-primary border-secondary rounded-pill py-2 px-4 mb-4"><i
-                            class="fas fa-shopping-cart me-2"></i> Add To Cart</a>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex">
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <div class="d-flex">
-                            <a href="#"
-                               class="text-primary d-flex align-items-center justify-content-center me-3"><span
-                                    class="rounded-circle btn-sm-square border"><i
-                                        class="fas fa-random"></i></i></a>
-                            <a href="#"
-                               class="text-primary d-flex align-items-center justify-content-center me-0"><span
-                                    class="rounded-circle btn-sm-square border"><i class="fas fa-heart"></i></a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="related-item rounded">
-                <div class="related-item-inner border rounded">
-                    <div class="related-item-inner-item">
-                        <img src="img/product-3.png" class="img-fluid w-100 rounded-top" alt="">
-                        <div class="related-new">New</div>
-                        <div class="related-details">
-                            <a href="#"><i class="fa fa-eye fa-1x"></i></a>
-                        </div>
-                    </div>
-                    <div class="text-center rounded-bottom p-4">
-                        <a href="#" class="d-block mb-2">SmartPhone</a>
-                        <a href="#" class="d-block h4">Apple iPad Mini <br> G2356</a>
-                        <del class="me-2 fs-5">$1,250.00</del>
-                        <span class="text-primary fs-5">$1,050.00</span>
-                    </div>
-                </div>
-                <div class="related-item-add border border-top-0 rounded-bottom  text-center p-4 pt-0">
-                    <a href="#" class="btn btn-primary border-secondary rounded-pill py-2 px-4 mb-4"><i
-                            class="fas fa-shopping-cart me-2"></i> Add To Cart</a>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex">
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <div class="d-flex">
-                            <a href="#"
-                               class="text-primary d-flex align-items-center justify-content-center me-3"><span
-                                    class="rounded-circle btn-sm-square border"><i
-                                        class="fas fa-random"></i></i></a>
-                            <a href="#"
-                               class="text-primary d-flex align-items-center justify-content-center me-0"><span
-                                    class="rounded-circle btn-sm-square border"><i class="fas fa-heart"></i></a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="related-item rounded">
-                <div class="related-item-inner border rounded">
-                    <div class="related-item-inner-item">
-                        <img src="img/product-3.png" class="img-fluid w-100 rounded-top" alt="">
-                        <div class="related-new">New</div>
-                        <div class="related-details">
-                            <a href="#"><i class="fa fa-eye fa-1x"></i></a>
-                        </div>
-                    </div>
-                    <div class="text-center rounded-bottom p-4">
-                        <a href="#" class="d-block mb-2">SmartPhone</a>
-                        <a href="#" class="d-block h4">Apple iPad Mini <br> G2356</a>
-                        <del class="me-2 fs-5">$1,250.00</del>
-                        <span class="text-primary fs-5">$1,050.00</span>
-                    </div>
-                </div>
-                <div class="related-item-add border border-top-0 rounded-bottom  text-center p-4 pt-0">
-                    <a href="#" class="btn btn-primary border-secondary rounded-pill py-2 px-4 mb-4"><i
-                            class="fas fa-shopping-cart me-2"></i> Add To Cart</a>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex">
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star text-primary"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <div class="d-flex">
-                            <a href="#"
-                               class="text-primary d-flex align-items-center justify-content-center me-3"><span
-                                    class="rounded-circle btn-sm-square border"><i
-                                        class="fas fa-random"></i></i></a>
-                            <a href="#"
-                               class="text-primary d-flex align-items-center justify-content-center me-0"><span
-                                    class="rounded-circle btn-sm-square border"><i class="fas fa-heart"></i></a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="container">
+<div class="mx-auto text-center pb-5" style="max-width: 700px;">
+<h4 class="text-primary mb-4 border-bottom border-primary border-2 d-inline-block p-2 title-border-radius wow fadeInUp"
+data-wow-delay="0.1s">Related Products</h4>
+<p class="wow fadeInUp" data-wow-delay="0.2s">Similar products like the ones selected</p>
+</div>
+<div class="related-carousel owl-carousel pt-4">
+
+@if(count($relatedProducts['data'])>0)
+@foreach($relatedProducts['data'] as $relatedProduct)
+<div class="related-item rounded">
+<div class="related-item-inner border rounded">
+<div class="related-item-inner-item">
+<img src="{{$relatedProduct['images'][0]['original_image_url']}}" class="img-fluid w-100 rounded-top" alt="">
+@if($relatedProduct['is_new'])
+<div class="related-new">New</div>
+@endif
+@if($relatedProduct['on_sale'])
+<div class="related-new">Offer</div>
+@endif
+<div class="related-details">
+<a href="{{config('app.url')}}/product/{{$relatedProduct['id']}}"><i class="fa fa-eye fa-1x"></i></a>
+</div>
+</div>
+<div class="text-center rounded-bottom p-4">
+<a href="{{config('app.url')}}/product/{{$relatedProduct['id']}}" class="d-block h4">{{$relatedProduct['name']}}</a>
+@if($relatedProduct['on_sale'])
+<del class="me-2 fs-5">{{$relatedProduct['prices']['regular']['formatted_price']}}</del>
+@endif
+<span class="text-primary fs-5">{{$relatedProduct['prices']['final']['formatted_price']}}</span>
+</div>
+</div>
+<div class="related-item-add border border-top-0 rounded-bottom  text-center p-4 pt-0">
+<a href="#" class="btn btn-primary border-secondary rounded-pill py-2 px-4 mb-4"><i
+class="fas fa-shopping-cart me-2"></i> Add To Cart</a>
+<div class="d-flex justify-content-between align-items-center">
+<div class="d-flex">
+<i class="fas fa-star text-primary"></i>
+<i class="fas fa-star text-primary"></i>
+<i class="fas fa-star text-primary"></i>
+<i class="fas fa-star text-primary"></i>
+<i class="fas fa-star"></i>
+</div>
+<div class="d-flex">
+<a href="#"
+class="text-primary d-flex align-items-center justify-content-center me-3"><span
+    class="rounded-circle btn-sm-square border"><i
+        class="fas fa-random"></i></i></a>
+<a href="#"
+class="text-primary d-flex align-items-center justify-content-center me-0"><span
+    class="rounded-circle btn-sm-square border"><i class="fas fa-heart"></i></a>
+</div>
+</div>
+</div>
+</div>
+@endforeach
+@endif
+</div>
+</div>
 </div>
 <!-- Related Product End -->
 @include('partials.footer')

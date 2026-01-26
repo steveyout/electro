@@ -26,6 +26,16 @@
 
     <!-- Customized Bootstrap Stylesheet -->
     <link href="{{asset('themes/shop/electro/css/bootstrap.min.css')}}" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/kartik-v/bootstrap-star-rating@4.1.2/css/star-rating.min.css" media="all" rel="stylesheet" type="text/css" />
+
+    <!-- with v4.1.0 Krajee SVG theme is used as default (and must be loaded as below) - include any of the other theme CSS files as mentioned below (and change the theme property of the plugin) -->
+    <link href="https://cdn.jsdelivr.net/gh/kartik-v/bootstrap-star-rating@4.1.2/themes/krajee-svg/theme.css" media="all" rel="stylesheet" type="text/css" />
+
+    <!--favicons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="{{asset('themes/shop/electro/images/apple-touch-icon.png')}}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{asset('themes/shop/electro/images/favicon-32x32.png')}}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{asset('themes/shop/electro/images/favicon-16x16.png')}}">
+    <link rel="manifest" href="{{asset('themes/shop/electro/images/site.webmanifest')}}">
 
     <!-- Template Stylesheet -->
     <link href="{{asset('themes/shop/electro/css/style.css')}}" rel="stylesheet">
@@ -62,24 +72,6 @@
             <div class="col-lg-4 text-center text-lg-end">
                 <div class="d-inline-flex align-items-center" style="height: 45px;">
                     <div class="dropdown">
-                        <a href="#" class="dropdown-toggle text-muted me-2" data-bs-toggle="dropdown"><small>
-USD</small></a>
-                        <div class="dropdown-menu rounded">
-                            <a href="#" class="dropdown-item"> Euro</a>
-                            <a href="#" class="dropdown-item"> Dolar</a>
-                        </div>
-                    </div>
-                    <div class="dropdown">
-                        <a href="#" class="dropdown-toggle text-muted mx-2" data-bs-toggle="dropdown"><small>
-English</small></a>
-                        <div class="dropdown-menu rounded">
-                            <a href="#" class="dropdown-item"> English</a>
-                            <a href="#" class="dropdown-item"> Turkish</a>
-                            <a href="#" class="dropdown-item"> Spanol</a>
-                            <a href="#" class="dropdown-item"> Italiano</a>
-                        </div>
-                    </div>
-                    <div class="dropdown">
                         <a href="#" class="dropdown-toggle text-muted ms-2" data-bs-toggle="dropdown"><small><i
                                     class="fa fa-home me-2"></i> My Dashboard</small></a>
                         <div class="dropdown-menu rounded">
@@ -100,10 +92,8 @@ English</small></a>
         <div class="row gx-0 align-items-center text-center">
             <div class="col-md-4 col-lg-3 text-center text-lg-start">
                 <div class="d-inline-flex align-items-center">
-                    <a href="" class="navbar-brand p-0">
-                        <h1 class="display-5 text-primary m-0 fs-6">
-                            <i class="fas fa-shopping-bag text-secondary me-2"></i>{{config('app.name')}}</h1>
-                        <!-- <img src="img/logo.png" alt="Logo"> -->
+                    <a href="{{route('shop.home.index')}}" class="navbar-brand p-0">
+                         <img src="{{asset('themes/shop/electro/images/logo.png')}}" alt="Logo">
                     </a>
                 </div>
             </div>
@@ -167,10 +157,8 @@ English</small></a>
             </div>
             <div class="col-12 col-lg-9">
                 <nav class="navbar navbar-expand-lg navbar-light bg-primary ">
-                    <a href="" class="navbar-brand d-block d-lg-none">
-                        <h1 class="display-5 text-secondary m-0 fs-6"><i
-                                class="fas fa-shopping-bag text-white me-2"></i>{{config('app.name')}}</h1>
-                        <!-- <img src="img/logo.png" alt="Logo"> -->
+                    <a href="{{route('shop.home.index')}}" class="navbar-brand p-0 d-lg-none">
+                        <img src="{{asset('themes/shop/electro/images/logo.png')}}" alt="Logo">
                     </a>
                     <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse"
                         data-bs-target="#navbarCollapse">
@@ -178,20 +166,12 @@ English</small></a>
                     </button>
                     <div class="collapse navbar-collapse" id="navbarCollapse">
                         <div class="navbar-nav ms-auto py-0">
-                            <a href="index.html" class="nav-item nav-link active">Home</a>
-                            <a href="shop.html" class="nav-item nav-link">Products</a>
-                            <a href="single.html" class="nav-item nav-link">About Us</a>
-                            <div class="nav-item dropdown">
-                                <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Categories</a>
-                                <div class="dropdown-menu m-0">
-                                    @isset($categories['data'])
-                                        @foreach($categories['data'] as $category)
-                                            <a href="{{config('app.url')}}/category/{{$category['id']}}}}" class="dropdown-item">{{$category['name']}}</a>
-                                        @endforeach
-                                    @endisset
-                                </div>
-                            </div>
-                            <a href="contact.html" class="nav-item nav-link me-2">Contact</a>
+                            <a href="{{route('shop.home.index')}}" class="nav-item nav-link active">Home</a>
+                            <a href="{{route('shop.home.products')}}" class="nav-item nav-link">Products</a>
+                            <a href="{{route('shop.home.about')}}" class="nav-item nav-link">About Us</a>
+                            <a href="{{ route('shop.home.categories') }}" class="nav-item nav-link">Categories</a>
+
+                            <a href="{{route('shop.home.contact')}}" class="nav-item nav-link me-2">Contact</a>
                             <div class="nav-item dropdown d-block d-lg-none mb-3">
                                 <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">All Category</a>
                                 <div class="dropdown-menu m-0">

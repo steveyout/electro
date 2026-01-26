@@ -215,7 +215,7 @@
                 </div>
             </div>
             <div class="text-center rounded-bottom p-4">
-                <a href="#" class="d-block h4">{{$product['name']}}</a>
+                <a href="{{config('app.url')}}/product/{{$product['id']}}" class="d-block h4">{{$product['name']}}</a>
                 @if($product['on_sale'])
                 <del class="me-2 fs-5">{{$products['data'][0]['prices']['regular']['formatted_price']}}</del>
                 @endif
@@ -267,7 +267,7 @@
                             </div>
                         </div>
                         <div class="text-center rounded-bottom p-4">
-                            <a href="#" class="d-block h4">{{$product['name']}}</a>
+                            <a href="{{config('app.url')}}/product/{{$product['id']}}" class="d-block h4">{{$product['name']}}</a>
                             @if($product['on_sale'])
                                 <del class="me-2 fs-5">{{$products['data'][0]['prices']['regular']['formatted_price']}}</del>
                             @endif
@@ -318,7 +318,7 @@
                             </div>
                         </div>
                         <div class="text-center rounded-bottom p-4">
-                            <a href="#" class="d-block h4">{{$product['name']}}</a>
+                            <a href="{{config('app.url')}}/product/{{$product['id']}}" class="d-block h4">{{$product['name']}}</a>
                             @if($product['on_sale'])
                                 <del class="me-2 fs-5">{{$products['data'][0]['prices']['regular']['formatted_price']}}</del>
                             @endif
@@ -355,43 +355,35 @@
 </div>
 <!-- Our Products End -->
 
+<!-- Products Offer Start -->
 <!-- Product Banner Start -->
 <div class="container-fluid py-5">
-<div class="container">
-<div class="row g-4">
-<div class="col-lg-6 wow fadeInLeft" data-wow-delay="0.1s">
-<a href="#">
-<div class="bg-primary rounded position-relative">
-<img src="img/product-banner.jpg" class="img-fluid w-100 rounded" alt="">
-<div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center rounded p-4"
-     style="background: rgba(255, 255, 255, 0.5);">
-    <h3 class="display-5 text-primary">EOS Rebel <br> <span>T7i Kit</span></h3>
-    <p class="fs-4 text-muted">$899.99</p>
-    <a href="#" class="btn btn-primary rounded-pill align-self-start py-2 px-4">Shop Now</a>
-</div>
-</div>
-</a>
-</div>
-<div class="col-lg-6 wow fadeInRight" data-wow-delay="0.2s">
-<a href="#">
-<div class="text-center bg-primary rounded position-relative">
-<img src="img/product-banner-2.jpg" class="img-fluid w-100" alt="">
-<div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center rounded p-4"
-     style="background: rgba(242, 139, 0, 0.5);">
-    <h2 class="display-2 text-secondary">SALE</h2>
-    <h4 class="display-5 text-white mb-4">Get UP To 50% Off</h4>
-    <a href="#" class="btn btn-secondary rounded-pill align-self-center py-2 px-4">Shop
-        Now</a>
-</div>
-</div>
-</a>
-</div>
-</div>
-</div>
-</div>
-<!-- Product Banner End -->
+    <div class="container">
+        <div class="row g-4">
+            @if(count($categories['data'])>0)
+                @foreach($categories['data'] as $category)
+            <div class="col-lg-6 wow fadeInLeft" data-wow-delay="0.1s">
+                <a href="{{config('app.url')}}/category/{{$category['id']}}">
+                    <div class="bg-primary rounded position-relative">
+                        <img src="{{$category['banner_url']}}" class="img-fluid w-100 rounded" alt="">
+                        <div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center rounded p-4"
+                             style="background: rgba(255, 255, 255, 0.5);">
+                            <h3 class="display-5 text-primary">{{$category['name']}}</h3>
+                            <a href="{{config('app.url')}}/category/{{$category['id']}}" class="btn btn-primary rounded-pill align-self-start py-2 px-4">Shop Now</a>
+                        </div>
+                    </div>
+                </a>
+            </div>
+                @endforeach
+            @endif
 
-<!-- Product List Satrt -->
+        </div>
+    </div>
+</div>
+
+<!-- Products Offer End -->
+
+<!-- Product List Start -->
 <div class="container-fluid products productList overflow-hidden">
 <div class="container products-mini py-5">
 <div class="mx-auto text-center mb-5" style="max-width: 900px;">
@@ -409,7 +401,7 @@ data-wow-delay="0.1s">Products</h4>
     <div class="products-mini-img border-end h-100">
         <img src="{{$product['images'][0]['original_image_url']}}" class="img-fluid w-100 h-100" alt="Image">
         <div class="products-mini-icon rounded-circle bg-primary">
-            <a href="#"><i class="fa fa-eye fa-1x text-white"></i></a>
+            <a href="{{config('app.url')}}/product/{{$product['id']}}"><i class="fa fa-eye fa-1x text-white"></i></a>
         </div>
     </div>
 </div>
@@ -421,7 +413,7 @@ data-wow-delay="0.1s">Products</h4>
         @if($product['on_sale'])
             <div class="product-new">Offer</div>
         @endif
-        <a href="#" class="d-block h4">{{$product['name']}}</a>
+        <a href="{{config('app.url')}}/product/{{$product['id']}}" class="d-block h4">{{$product['name']}}</a>
             @if($product['on_sale'])
                 <del class="me-2 fs-5">{{$products['data'][0]['prices']['regular']['formatted_price']}}</del>
             @endif
@@ -470,13 +462,13 @@ data-wow-delay="0.1s">Newest Products</h4>
     <div class="products-mini-img border-end h-100">
         <img src="{{$product['images'][0]['original_image_url']}}" class="img-fluid w-100 h-100" alt="Image">
         <div class="products-mini-icon rounded-circle bg-primary">
-            <a href="#"><i class="fa fa-eye fa-1x text-white"></i></a>
+            <a href="{{config('app.url')}}/product/{{$product['id']}}"><i class="fa fa-eye fa-1x text-white"></i></a>
         </div>
     </div>
 </div>
 <div class="col-7">
     <div class="products-mini-content p-3">
-        <a href="#" class="d-block h4">{{$product['name']}}</a>
+        <a href="{{config('app.url')}}/product/{{$product['id']}}" class="d-block h4">{{$product['name']}}</a>
         @if($product['on_sale'])
             <del class="me-2 fs-5">{{$products['data'][0]['prices']['regular']['formatted_price']}}</del>
         @endif

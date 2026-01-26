@@ -22,12 +22,12 @@ class BagistoApiService
     }
 
     // /get all products
-    public function getProducts()
+    public function getProducts($parameters)
     {
         $response = Http::withHeaders([
             'Accept'        => 'application/json',
             'Authorization' => 'Bearer '.$this->token, // For authenticated endpoints
-        ])->get($this->baseUrl.$this->prefix.'/products?limit=12'); // Example: hitting the products endpoint
+        ])->get($this->baseUrl.$this->prefix.'/products',$parameters); // Example: hitting the products endpoint
 
         if ($response->failed()) {
             // Handle the error
@@ -59,7 +59,7 @@ class BagistoApiService
         $response = Http::withHeaders([
             'Accept'        => 'application/json',
             'Authorization' => 'Bearer '.$this->token, // For authenticated endpoints
-        ])->get($this->baseUrl.$this->prefix.'/categories'); // Example: hitting the products endpoint
+        ])->get($this->baseUrl.$this->prefix.'/v1/categories'); // Example: hitting the products endpoint
 
         if ($response->failed()) {
             // Handle the error
@@ -100,7 +100,7 @@ class BagistoApiService
         $response = Http::withHeaders([
             'Accept'        => 'application/json',
             'Authorization' => 'Bearer '.$this->token, // For authenticated endpoints
-        ])->get($this->baseUrl.$this->prefix.'/v1/products/'.$id.'?includeReviews=true&includeRelated=true'); // Example: hitting the products endpoint
+        ])->get($this->baseUrl.$this->prefix.'/v1/products/'.$id); // Example: hitting the products endpoint
 
         if ($response->failed()) {
             // Handle the error
@@ -109,6 +109,7 @@ class BagistoApiService
 
         return $response->json();
     }
+
     // ///////////////////////
     // / get product reviews
     // / /////////////////
@@ -123,6 +124,29 @@ class BagistoApiService
             'Accept'        => 'application/json',
             'Authorization' => 'Bearer '.$this->token, // For authenticated endpoints
         ])->get($this->baseUrl.$this->prefix.'/v1/products/'.$id.'/reviews'); // Example: hitting the products endpoint
+
+        if ($response->failed()) {
+            // Handle the error
+            throw new Exception('API request failed: '.$response->status());
+        }
+
+        return $response->json();
+    }
+
+    // ///////////////////////
+    // / get product reviews
+    // / /////////////////
+    public function getRelatedProducts($id)
+    {
+        if (! $id) {
+            // Handle the error
+            throw new Exception('API request failed: no product id provided');
+        }
+
+        $response = Http::withHeaders([
+            'Accept'        => 'application/json',
+            'Authorization' => 'Bearer '.$this->token, // For authenticated endpoints
+        ])->get($this->baseUrl.$this->prefix.'/products/'.$id.'/related'); // Example: hitting the products endpoint
 
         if ($response->failed()) {
             // Handle the error
