@@ -1,6 +1,12 @@
 (function ($) {
     "use strict";
 
+    //ajax setup
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
     // Spinner
     var spinner = function () {
         setTimeout(function () {
@@ -181,6 +187,41 @@
         size: 'sm',
         showClear: false
     });
+
+
+
+    ///////add to cart
+    $(".add-cart").on('click',function (e) {
+        e.preventDefault();
+        let button=$(this)
+        let id=button.attr("id")
+        if (!id){
+            return
+        }
+        ////make the ajax call
+        $.ajax({
+            url: "./cart/add/"+id,
+            type: "POST", // or "POST", "PUT", "DELETE", etc.
+            dataType: "json", // type of data expected back from the server
+            beforeSend: function () {
+                button.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>').attr('disabled',true)
+            },
+            success: function(response) {
+                button.html('<i class="fas fa-shopping-cart me-2"></i> Add To Cart').attr('disabled',false)
+                // Callback function to run if the request succeeds
+                console.log("Data received:", response);
+            },
+            error: function(xhr, status, error) {
+                button.html('<i class="fas fa-shopping-cart me-2"></i> Add To Cart').attr('disabled',false)
+                // Callback function to run if the request fails
+                console.error("Error:", error);
+            },
+            complete: function() {
+                // Callback function to run when the request is complete (regardless of success/failure)
+                console.log("Request finished.");
+            }
+        });
+    })
 
 
 })(jQuery);

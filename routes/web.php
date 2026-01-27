@@ -1,10 +1,10 @@
 <?php
 
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 
-
-//unauthenticated endpoints
+// unauthenticated endpoints
 Route::get('/', [HomeController::class, 'index'])->name('shop.home.index');
 Route::get('/about', [HomeController::class, 'products'])->name('shop.home.about');
 Route::get('/contact', [HomeController::class, 'contact'])->name('shop.home.contact');
@@ -14,3 +14,7 @@ Route::get('/product/{id}', [HomeController::class, 'product'])->name('shop.home
 Route::get('/category/{id}', [HomeController::class, 'category'])->name('shop.home.category');
 
 // /authenticated endpoints
+// /cart
+Route::prefix('cart')->group(function () {
+    Route::post('/add/{id}', [CartController::class, 'addToCart'])->name('shop.home.cart.add');
+});

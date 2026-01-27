@@ -224,9 +224,9 @@
         </div>
         <div
             class="product-item-add border border-top-0 rounded-bottom text-center p-4 pt-0">
-            <a href="#"
-               class="btn btn-primary border-secondary rounded-pill py-2 px-4 mb-4"><i
-                    class="fas fa-shopping-cart me-2"></i> Add To Cart</a>
+            <button id="{{$product['id']}}"
+               class="btn btn-primary border-secondary rounded-pill py-2 px-4 mb-4 add-cart" ><i
+                    class="fas fa-shopping-cart me-2"></i> Add To Cart</button>
             <div class="d-flex justify-content-center align-items-center">
                 <div class="d-flex">
                     <div href="#"
@@ -276,9 +276,9 @@
                     </div>
                     <div
                         class="product-item-add border border-top-0 rounded-bottom text-center p-4 pt-0">
-                        <a href="#"
-                           class="btn btn-primary border-secondary rounded-pill py-2 px-4 mb-4"><i
-                                class="fas fa-shopping-cart me-2"></i> Add To Cart</a>
+                        <button id="{{$product['id']}}"
+                           class="btn btn-primary border-secondary rounded-pill py-2 px-4 mb-4 add-cart"><i
+                                class="fas fa-shopping-cart me-2"></i> Add To Cart<button>
                         <div class="d-flex justify-content-center align-items-center">
                             <div class="d-flex">
                                 <div href="#"
@@ -327,9 +327,9 @@
                     </div>
                     <div
                         class="product-item-add border border-top-0 rounded-bottom text-center p-4 pt-0">
-                        <a href="#"
-                           class="btn btn-primary border-secondary rounded-pill py-2 px-4 mb-4"><i
-                                class="fas fa-shopping-cart me-2"></i> Add To Cart</a>
+                        <button id="{{$product['id']}}"
+                           class="btn btn-primary border-secondary rounded-pill py-2 px-4 mb-4 add-cart"><i
+                                class="fas fa-shopping-cart me-2"></i> Add To Cart</button>
                         <div class="d-flex justify-content-center align-items-center">
                             <div class="d-flex">
                                 <div href="#"
@@ -422,8 +422,8 @@ data-wow-delay="0.1s">Products</h4>
 </div>
 </div>
 <div class="products-mini-add border p-3">
-<a href="#" class="btn btn-primary border-secondary rounded-pill py-2 px-4"><i
-        class="fas fa-shopping-cart me-2"></i> Add To Cart</a>
+    <button id="{{$product['id']}}" class="btn btn-primary border-secondary rounded-pill py-2 px-4 add-cart"><i
+            class="fas fa-shopping-cart me-2"></i> Add To Cart</button>
 <div class="d-flex">
     <a href="#"
        class="text-primary d-flex align-items-center justify-content-center me-3"><span
@@ -477,8 +477,8 @@ data-wow-delay="0.1s">Newest Products</h4>
 </div>
 </div>
 <div class="products-mini-add border p-3">
-<a href="#" class="btn btn-primary border-secondary rounded-pill py-2 px-4"><i
-        class="fas fa-shopping-cart me-2"></i> Add To Cart</a>
+    <button id="{{$product['id']}}" class="btn btn-primary border-secondary rounded-pill py-2 px-4 add-cart">
+        <i class="fas fa-shopping-cart me-2"></i> Add To Cart</button>
 <div class="d-flex">
     <a href="#"
        class="text-primary d-flex align-items-center justify-content-center me-3"><span

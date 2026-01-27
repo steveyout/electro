@@ -155,4 +155,27 @@ class BagistoApiService
 
         return $response->json();
     }
+
+    // ///////////////////////
+    // / add to cart
+    // / /////////////////
+    public function addToCart($id)
+    {
+        if (! $id) {
+            // Handle the error
+            throw new Exception('API request failed: no product id provided');
+        }
+
+        $response = Http::withHeaders([
+            'Accept'        => 'application/json',
+            'Authorization' => 'Bearer '.$this->token, // For authenticated endpoints
+        ])->post($this->baseUrl.$this->prefix.'/v1/customer/cart/add/'.$id); // Example: hitting the products endpoint
+
+        if ($response->failed()) {
+            // Handle the error
+            throw new Exception('API request failed: '.$response->status());
+        }
+
+        return $response->json();
+    }
 }
