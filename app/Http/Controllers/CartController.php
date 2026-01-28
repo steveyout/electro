@@ -17,13 +17,20 @@ class CartController extends Controller
     // //cart page
     public function addToCart(Request $request, $id)
     {
-        global $response;
         if (! $id) {
             throw new Exception('no product id provided!');
         }
-        $cart = $this->bagistoApi->addToCart($id);
 
-        return $response->json([
+        $csrfToken = $request->cookie('XSRF-TOKEN');
+
+        $parameters=[
+            'product_id'=>$id,
+            'is_buy_now'=>0,
+            'quantity'=>1
+        ];
+        $cart = $this->bagistoApi->addToCart($id, $csrfToken,$parameters);
+
+        return response()->json([
             'success'    => true,
             'cart'       => $cart,
         ]);

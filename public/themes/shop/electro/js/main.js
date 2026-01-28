@@ -195,19 +195,23 @@
         e.preventDefault();
         let button=$(this)
         let id=button.attr("id")
+        let cartBadge=parseInt($('.cart-badge').text())||0
         if (!id){
             return
         }
         ////make the ajax call
         $.ajax({
-            url: "./cart/add/"+id,
-            type: "POST", // or "POST", "PUT", "DELETE", etc.
+            url: "./api/v1/products?id="+id+"&sort=id",
+            type: "GET", // or "POST", "PUT", "DELETE", etc.
             dataType: "json", // type of data expected back from the server
             beforeSend: function () {
                 button.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>').attr('disabled',true)
             },
             success: function(response) {
+                const product=response.data
                 button.html('<i class="fas fa-shopping-cart me-2"></i> Add To Cart').attr('disabled',false)
+                $('.cart-badge').text(cartBadge+ 1);
+                $('.cart-total').text(cartBadge+ 1);
                 // Callback function to run if the request succeeds
                 console.log("Data received:", response);
             },

@@ -14,6 +14,8 @@ Route::get('/product/{id}', [HomeController::class, 'product'])->name('shop.home
 Route::get('/category/{id}', [HomeController::class, 'category'])->name('shop.home.category');
 
 // /authenticated endpoints
+Route::get('/login', [HomeController::class, 'index'])->name('login');
+
 // /cart
 Route::prefix('cart')->group(function () {
     Route::post('/add/{id}', [CartController::class, 'addToCart'])->name('shop.home.cart.add');

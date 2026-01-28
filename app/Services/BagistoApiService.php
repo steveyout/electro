@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Exception;
 use Illuminate\Support\Facades\Http;
+use Webkul\Checkout\Cart;
 
 class BagistoApiService
 {
@@ -27,7 +28,7 @@ class BagistoApiService
         $response = Http::withHeaders([
             'Accept'        => 'application/json',
             'Authorization' => 'Bearer '.$this->token, // For authenticated endpoints
-        ])->get($this->baseUrl.$this->prefix.'/products',$parameters); // Example: hitting the products endpoint
+        ])->get($this->baseUrl.$this->prefix.'/products', $parameters); // Example: hitting the products endpoint
 
         if ($response->failed()) {
             // Handle the error
@@ -159,21 +160,21 @@ class BagistoApiService
     // ///////////////////////
     // / add to cart
     // / /////////////////
-    public function addToCart($id)
+    public function addToCart($id, $csrfToken, $parameters)
     {
         if (! $id) {
             // Handle the error
             throw new Exception('API request failed: no product id provided');
         }
-
         $response = Http::withHeaders([
-            'Accept'        => 'application/json',
-            'Authorization' => 'Bearer '.$this->token, // For authenticated endpoints
-        ])->post($this->baseUrl.$this->prefix.'/v1/customer/cart/add/'.$id); // Example: hitting the products endpoint
+            'Accept'          => 'application/json',
+            'Content-Type'    => 'application/json',
+            'X-CSRF-TOKEN'    => $csrfToken,
+        ])->post($this->baseUrl.$this->prefix.'/v1/customer/cart/add/'.$id, $parameters);
 
         if ($response->failed()) {
             // Handle the error
-            throw new Exception('API request failed: '.$response->status());
+            throw new Exception('API request failed: '.$response->status().' '.$response->json()['message']);
         }
 
         return $response->json();

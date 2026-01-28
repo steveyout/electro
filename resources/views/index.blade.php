@@ -217,9 +217,9 @@
             <div class="text-center rounded-bottom p-4">
                 <a href="{{config('app.url')}}/product/{{$product['id']}}" class="d-block h4">{{$product['name']}}</a>
                 @if($product['on_sale'])
-                <del class="me-2 fs-5">{{$products['data'][0]['prices']['regular']['formatted_price']}}</del>
+                <del class="me-2 fs-5">{{$product['prices']['regular']['formatted_price']}}</del>
                 @endif
-                <span class="text-primary fs-5">{{$products['data'][0]['prices']['final']['formatted_price']}}</span>
+                <span class="text-primary fs-5 product-price">{{$product['prices']['final']['formatted_price']}}</span>
             </div>
         </div>
         <div
@@ -269,9 +269,9 @@
                         <div class="text-center rounded-bottom p-4">
                             <a href="{{config('app.url')}}/product/{{$product['id']}}" class="d-block h4">{{$product['name']}}</a>
                             @if($product['on_sale'])
-                                <del class="me-2 fs-5">{{$products['data'][0]['prices']['regular']['formatted_price']}}</del>
+                                <del class="me-2 fs-5">{{$product['prices']['regular']['formatted_price']}}</del>
                             @endif
-                            <span class="text-primary fs-5">{{$products['data'][0]['prices']['final']['formatted_price']}}</span>
+                            <span class="text-primary fs-5 product-price">{{$product['prices']['final']['formatted_price']}}</span>
                         </div>
                     </div>
                     <div
@@ -320,9 +320,9 @@
                         <div class="text-center rounded-bottom p-4">
                             <a href="{{config('app.url')}}/product/{{$product['id']}}" class="d-block h4">{{$product['name']}}</a>
                             @if($product['on_sale'])
-                                <del class="me-2 fs-5">{{$products['data'][0]['prices']['regular']['formatted_price']}}</del>
+                                <del class="me-2 fs-5">{{$product['prices']['regular']['formatted_price']}}</del>
                             @endif
-                            <span class="text-primary fs-5">{{$products['data'][0]['prices']['final']['formatted_price']}}</span>
+                            <span class="text-primary fs-5 product-price">{{$product['prices']['final']['formatted_price']}}</span>
                         </div>
                     </div>
                     <div
@@ -415,9 +415,9 @@ data-wow-delay="0.1s">Products</h4>
         @endif
         <a href="{{config('app.url')}}/product/{{$product['id']}}" class="d-block h4">{{$product['name']}}</a>
             @if($product['on_sale'])
-                <del class="me-2 fs-5">{{$products['data'][0]['prices']['regular']['formatted_price']}}</del>
+                <del class="me-2 fs-5">{{$product['prices']['regular']['formatted_price']}}</del>
             @endif
-            <span class="text-primary fs-5">{{$products['data'][0]['prices']['final']['formatted_price']}}</span>
+            <span class="text-primary fs-5 product-price">{{$product['prices']['final']['formatted_price']}}</span>
     </div>
 </div>
 </div>
@@ -470,9 +470,9 @@ data-wow-delay="0.1s">Newest Products</h4>
     <div class="products-mini-content p-3">
         <a href="{{config('app.url')}}/product/{{$product['id']}}" class="d-block h4">{{$product['name']}}</a>
         @if($product['on_sale'])
-            <del class="me-2 fs-5">{{$products['data'][0]['prices']['regular']['formatted_price']}}</del>
+            <del class="me-2 fs-5">{{$product['prices']['regular']['formatted_price']}}</del>
         @endif
-        <span class="text-primary fs-5">{{$products['data'][0]['prices']['final']['formatted_price']}}</span>
+        <span class="text-primary fs-5 product-price">{{$product['prices']['final']['formatted_price']}}</span>
     </div>
 </div>
 </div>
