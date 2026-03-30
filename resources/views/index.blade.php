@@ -52,13 +52,15 @@
                                     <h5 class="text-muted fw-light mb-2">
                                         Save Up To <span class="text-primary fw-bold">{{ core()->currency($product->price - $minPrice) }}</span> On
                                     </h5>
-                                    <h2 class="fw-bold text-dark mb-3">
+                                    <h2 class="fw-bold text-dark mb-3" style="font-size: 2rem;">
                                         {{ $product->name }}
                                     </h2>
-                                    {{-- Render HTML description --}}
-                                    <div class="text-secondary mb-4 small-desc">
+
+                                    {{-- Render Short Description with HTML support --}}
+                                    <div class="text-secondary mb-4 small-desc" style="font-size: 0.9rem; line-height: 1.5; max-width: 450px;">
                                         {!! $product->short_description !!}
                                     </div>
+
                                     <a class="btn btn-primary rounded-pill py-2 px-5 fw-bold"
                                        href="{{ route('shop.home.product', $product->id) }}">
                                         Shop Now
@@ -69,7 +71,7 @@
                                     <div class="bg-circle-overlay"></div>
                                     <img src="{{ $product->base_image_url }}"
                                          class="img-fluid position-relative"
-                                         style="max-height: 380px; object-fit: contain; z-index: 2;"
+                                         style="max-height: 350px; object-fit: contain; z-index: 2;"
                                          alt="{{ $product->name }}">
                                 </div>
                             </div>
