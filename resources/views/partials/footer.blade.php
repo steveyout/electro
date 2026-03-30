@@ -79,7 +79,7 @@
 
 
 <!-- Template Javascript -->
-<script src="{{asset('themes/shop/electro/js/main.js')}}"></script>
+<script src="{{ asset('themes/shop/electro/js/main.js') }}?v={{ time() }}"></script>
 </body>
 
 </html>
