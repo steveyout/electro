@@ -40,7 +40,7 @@
     <link rel="manifest" href="{{asset('themes/shop/electro/images/site.webmanifest')}}">
 
     <!-- Template Stylesheet -->
-    <link href="{{asset('themes/shop/electro/css/style.css')}}" rel="stylesheet">
+    <link href="{{ asset('themes/shop/electro/css/style.css') }}?v={{ filemtime(public_path('themes/shop/electro/css/style.css')) }}" rel="stylesheet">
 
 </head>
 
