@@ -28,9 +28,9 @@
                 <a class="h6 d-block text-truncate mb-2 text-decoration-none" href="' . $productUrl . '">' . $product->name . '</a>
 
 
-                <div class="d-flex flex-column flex-md-row justify-content-center align-items-center">
-                    <span class="text-primary fw-bold me-md-2 mb-1 mb-md-0">' . core()->currency($minP) . '</span>
-                    ' . ($minP < $regP ? '<span class="text-muted text-decoration-line-through small">' . core()->currency($regP) . '</span>' : '') . '
+                <div class="d-flex flex-column justify-content-center align-items-center">
+                    <span class="text-primary fw-bold mb-0" style="font-size: 1.1rem;">' . core()->currency($minP) . '</span>
+                    ' . ($minP < $regP ? '<span class="text-muted text-decoration-line-through" style="font-size: 0.85rem; margin-top: -2px;">' . core()->currency($regP) . '</span>' : '') . '
                 </div>
             </div>
         </div>';
@@ -226,21 +226,14 @@
     .product-item img { transition: transform 0.5s ease; height: 180px; object-fit: contain; }
     .product-item:hover img { transform: scale(1.08); }
 
-    /* Pricing Mobile Fix */
-    @media (max-width: 767px) {
-        .product-item .d-flex.flex-column { gap: 2px; }
-        .product-item .text-decoration-line-through { font-size: 0.75rem; opacity: 0.8; }
-        .product-item .h6 { font-size: 0.85rem; margin-bottom: 5px !important; }
-    }
+    /* Pricing Mobile Fix: Ensuring vertical stacking always */
+    .product-item .d-flex.flex-column { gap: 0; }
+
+    .product-item .h6 { font-size: 0.9rem; margin-bottom: 5px !important; }
 
     /* Carousel Content Styling */
     .carousel-content h2 { font-size: 2rem; letter-spacing: -0.5px; }
     .small-desc { font-size: 0.95rem; color: #6c757d; max-width: 450px; line-height: 1.6; }
-    .bg-circle-overlay {
-        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        width: 320px; height: 320px; background: radial-gradient(circle, #ffffff 0%, rgba(255,255,255,0) 70%);
-        border-radius: 50%; z-index: 1;
-    }
 
     /* Discount Badge */
     .discount-badge {
@@ -263,37 +256,19 @@
     .promo-banner { transition: transform 0.3s ease; }
     .promo-banner:hover { transform: translateY(-5px); }
 
-    /* Container Fixes */
-    .container.carousel {
-        background-color: #F4F6F7 !important;
-        overflow: hidden;
-        position: relative;
-    }
-
-    /* 1. Force the outer container to clip strictly */
+    /* Carousel Visibility & Peeking Fixes */
     .header-carousel.owl-carousel .owl-stage-outer {
         overflow: hidden !important;
         width: 100% !important;
     }
-
-    /* 2. Hide all slides that are NOT currently active */
     .header-carousel.owl-carousel .owl-item {
         visibility: hidden;
-        transition: visibility 0s 0.3s; /* Smooth transition delay */
+        transition: visibility 0s 0.3s;
     }
-
-    /* 3. Only show the slide with the .active class */
     .header-carousel.owl-carousel .owl-item.active {
         visibility: visible;
         transition: visibility 0s 0s;
     }
-
-    /* 4. Ensure the background color doesn't flicker during transitions */
-    .header-carousel.owl-carousel {
-        background-color: #F4F6F7 !important;
-    }
-
-    /* 5. Refined Blend Overlay */
     .blend-overlay-right {
         position: absolute;
         top: 0;
