@@ -1,26 +1,29 @@
 (function ($) {
     "use strict";
 
-    //ajax setup
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    // 1. GLOBAL SPINNER CONTROL
+    // Hide spinner when everything (images/scripts) is fully loaded
+    $(window).on('load', function () {
+        if ($('#spinner').length > 0) {
+            $('#spinner').removeClass('show');
         }
     });
-    // Spinner
-    var spinner = function () {
-        setTimeout(function () {
-            if ($('#spinner').length > 0) {
-                $('#spinner').removeClass('show');
-            }
-        }, 1);
-    };
-    spinner(0);
 
+    // Fallback: Force hide spinner after 5 seconds if it gets stuck
+    setTimeout(function () {
+        if ($('#spinner').hasClass('show')) {
+            $('#spinner').removeClass('show');
+        }
+    }, 5000);
 
-    // Initiate the wowjs
-    new WOW().init();
+    $.ajaxSetup({
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
+    });
 
+    // Initialize WOW.js
+    if (typeof WOW !== 'undefined') {
+        new WOW().init();
+    }
 
     // Sticky Navbar
     $(window).scroll(function () {
@@ -31,202 +34,88 @@
         }
     });
 
-
-    // Hero Header carousel
+    // Hero Header Carousel
     $(".header-carousel").owlCarousel({
         items: 1,
         autoplay: true,
         smartSpeed: 2000,
-        center: false,
-        dots: false,
         loop: true,
-        margin: 0,
+        dots: false,
         nav : true,
-        navText : [
-            '<i class="bi bi-arrow-left"></i>',
-            '<i class="bi bi-arrow-right"></i>'
-        ]
+        navText : ['<i class="bi bi-arrow-left"></i>', '<i class="bi bi-arrow-right"></i>']
     });
 
-
-    // ProductList carousel
+    // Main Product Carousel - 5 items (Desktop) / 2 items (Mobile)
     $(".productList-carousel").owlCarousel({
         autoplay: true,
-        smartSpeed: 2000,
+        smartSpeed: 1000,
         dots: false,
         loop: true,
-        margin: 25,
+        margin: 15,
         nav : true,
-        navText : [
-            '<i class="fas fa-chevron-left"></i>',
-            '<i class="fas fa-chevron-right"></i>'
-        ],
-        responsiveClass: true,
+        navText : ['<i class="fas fa-chevron-left"></i>', '<i class="fas fa-chevron-right"></i>'],
         responsive: {
             0:{
-                items:1
-            },
-            576:{
-                items:1
+                items: 2, // Matches col-6
+                margin: 10
             },
             768:{
-                items:2
+                items: 3,
+                margin: 15
             },
             992:{
-                items:2
-            },
-            1200:{
-                items:3
+                items: 5, // Matches col-lg-2-4
+                margin: 16
             }
         }
     });
 
-    // ProductList categories carousel
-    $(".productImg-carousel").owlCarousel({
-        autoplay: true,
-        smartSpeed: 1500,
-        dots: false,
-        loop: true,
-        items: 1,
-        margin: 25,
-        nav : true,
-        navText : [
-            '<i class="bi bi-arrow-left"></i>',
-            '<i class="bi bi-arrow-right"></i>'
-        ]
-    });
+    // Add to Cart Logic
+    $(document).on('click', ".add-cart", function (e) {
+        e.preventDefault();
+        let button = $(this);
+        let id = button.attr("id");
+        let cartBadgeElement = $('.cart-badge').first();
+        let cartBadge = parseInt(cartBadgeElement.text()) || 0;
 
+        if (!id) return;
 
-    // Single Products carousel
-    $(".single-carousel").owlCarousel({
-        autoplay: true,
-        smartSpeed: 1500,
-        dots: true,
-        dotsData: true,
-        loop: true,
-        items: 1,
-        nav : true,
-        navText : [
-            '<i class="bi bi-arrow-left"></i>',
-            '<i class="bi bi-arrow-right"></i>'
-        ]
-    });
+        $.ajax({
+            url: "./api/v1/products?id=" + id + "&sort=id",
+            type: "GET",
+            dataType: "json",
+            beforeSend: function () {
+                // Preserve button width while loading
+                button.css('width', button.outerWidth());
+                button.html('<span class="spinner-border spinner-border-sm"></span>').attr('disabled', true);
+            },
+            success: function(response) {
+                button.html('<i class="fas fa-check"></i>').addClass('btn-success').removeClass('btn-primary');
 
+                // Reset button after 2 seconds
+                setTimeout(function() {
+                    button.html('Add to cart').removeClass('btn-success').addClass('btn-primary').attr('disabled', false).css('width', '');
+                }, 2000);
 
-    // ProductList carousel
-    $(".related-carousel").owlCarousel({
-        autoplay: true,
-        smartSpeed: 1500,
-        dots: false,
-        loop: ( $('.owl-carousel .items').length > 5 ),
-        margin: 25,
-        nav : true,
-        navText : [
-            '<i class="fas fa-chevron-left"></i>',
-            '<i class="fas fa-chevron-right"></i>'
-        ],
-        responsiveClass: true,
-        responsive: {
-            0:{
-                items:1
+                let newTotal = cartBadge + 1;
+                $('.cart-badge, .cart-total').text(newTotal);
             },
-            576:{
-                items:1
-            },
-            768:{
-                items:2
-            },
-            992:{
-                items:3
-            },
-            1200:{
-                items:4
+            error: function() {
+                button.html('Add to cart').attr('disabled', false).css('width', '');
             }
-        }
+        });
     });
 
-
-
-    // Product Quantity
-    $('.quantity button').on('click', function () {
-        var button = $(this);
-        var oldValue = button.parent().parent().find('input').val();
-        if (button.hasClass('btn-plus')) {
-            var newVal = parseFloat(oldValue) + 1;
-        } else {
-            if (oldValue > 0) {
-                var newVal = parseFloat(oldValue) - 1;
-            } else {
-                newVal = 0;
-            }
-        }
-        button.parent().parent().find('input').val(newVal);
+    // Back to top
+    $(window).scroll(function () {
+        if ($(this).scrollTop() > 300) { $('.back-to-top').fadeIn('slow'); }
+        else { $('.back-to-top').fadeOut('slow'); }
     });
 
-
-
-   // Back to top button
-   $(window).scroll(function () {
-    if ($(this).scrollTop() > 300) {
-        $('.back-to-top').fadeIn('slow');
-    } else {
-        $('.back-to-top').fadeOut('slow');
-    }
-    });
     $('.back-to-top').click(function () {
         $('html, body').animate({scrollTop: 0}, 1500, 'easeInOutExpo');
         return false;
     });
-
-
-    ///ratings
-    $("#ratings").rating({
-        min: 0,
-        max: 5,
-        step: 1,
-        size: 'sm',
-        showClear: false
-    });
-
-
-
-    ///////add to cart
-    $(".add-cart").on('click',function (e) {
-        e.preventDefault();
-        let button=$(this)
-        let id=button.attr("id")
-        let cartBadge=parseInt($('.cart-badge').text())||0
-        if (!id){
-            return
-        }
-        ////make the ajax call
-        $.ajax({
-            url: "./api/v1/products?id="+id+"&sort=id",
-            type: "GET", // or "POST", "PUT", "DELETE", etc.
-            dataType: "json", // type of data expected back from the server
-            beforeSend: function () {
-                button.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>').attr('disabled',true)
-            },
-            success: function(response) {
-                const product=response.data
-                button.html('<i class="fas fa-shopping-cart me-2"></i> Add To Cart').attr('disabled',false)
-                $('.cart-badge').text(cartBadge+ 1);
-                $('.cart-total').text(cartBadge+ 1);
-                // Callback function to run if the request succeeds
-                console.log("Data received:", response);
-            },
-            error: function(xhr, status, error) {
-                button.html('<i class="fas fa-shopping-cart me-2"></i> Add To Cart').attr('disabled',false)
-                // Callback function to run if the request fails
-                console.error("Error:", error);
-            },
-            complete: function() {
-                // Callback function to run when the request is complete (regardless of success/failure)
-                console.log("Request finished.");
-            }
-        });
-    })
-
 
 })(jQuery);
 

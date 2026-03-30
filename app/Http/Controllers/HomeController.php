@@ -2,112 +2,71 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\BagistoApiService;
-use Exception;
 use Illuminate\Http\Request;
+use Webkul\Product\Repositories\ProductRepository;
+use Webkul\Category\Repositories\CategoryRepository;
+use Webkul\Product\Repositories\ProductReviewRepository;
 
 class HomeController extends Controller
 {
-    protected BagistoApiService $bagistoApi;
+    public function __construct(
+        protected ProductRepository $productRepository,
+        protected CategoryRepository $categoryRepository,
+        protected ProductReviewRepository $reviewRepository
+    ) {}
 
-    public function __construct(BagistoApiService $bagistoApiService)
-    {
-        $this->bagistoApi = $bagistoApiService;
-    }
-
-    // index
     public function index(Request $request)
     {
-        $products = $this->bagistoApi->getProducts([
-            'limit'=> 12,
-            'page' => $request->query('page', 1),
-        ]);
-        $featuredProducts = $this->bagistoApi->getFeaturedProducts();
-        $newProducts = $this->bagistoApi->getNewProducts();
-        $categories = $this->bagistoApi->getCategories();
+        // 1. Get products for the main sections
+        $products = $this->productRepository->getAll($request->all());
+        $featuredProducts = $this->productRepository->getAll(['featured' => 1, 'limit' => 12]);
+        $newProducts = $this->productRepository->getAll(['new' => 1, 'limit' => 12]);
 
-        return view('index', [
-            'featuredProducts' => $featuredProducts,
-            'products'         => $products,
-            'newProducts'      => $newProducts,
-            'categories'       => $categories,
-        ]);
+        // 2. Get the Tree (Used for your Navbar/Search dropdown)
+        $categories = $this->categoryRepository->getVisibleCategoryTree(
+            core()->getCurrentChannel()->root_category_id
+        );
 
+        // 3. Get exactly 4 ACTIVE categories for the homepage carousels
+        // We query the database directly for siblings of the root category
+        $homeCategories = $this->categoryRepository->scopeQuery(function($query) {
+            return $query->where('status', 1)
+                ->where('parent_id', core()->getCurrentChannel()->root_category_id)
+                ->orderBy('position', 'asc')
+                ->limit(4);
+        })->get();
+
+        return view('index', compact('featuredProducts', 'products', 'newProducts', 'categories', 'homeCategories'));
     }
 
-    // ////////////get product
-    public function product(Request $request, $id)
-    {
-        if (! $id) {
-            throw new Exception('no product id provided!');
-        }
-        $products = $this->bagistoApi->getFeaturedProducts();
-        $product = $this->bagistoApi->getProduct($id);
-        $relatedProducts = $this->bagistoApi->getRelatedProducts($id);
-        $reviews = $this->bagistoApi->getProductReviews($id);
-        $categories = $this->bagistoApi->getCategories();
-
-        return view('product', [
-            'products'         => $products,
-            'product'          => $product,
-            'categories'       => $categories,
-            'relatedProducts'  => $relatedProducts,
-            'reviews'          => $reviews,
-        ]);
-
+    // ... Keep your other methods (product, category, etc.) as they were
+    public function product(Request $request, $id) {
+        $product = $this->productRepository->findOrFail($id);
+        $reviews = $this->reviewRepository->findByField(['product_id' => $id, 'status' => 'approved']);
+        $categories = $this->categoryRepository->getVisibleCategoryTree(core()->getCurrentChannel()->root_category_id);
+        return view('product', ['product' => $product, 'relatedProducts' => $product->related_products, 'reviews' => $reviews, 'categories' => $categories]);
     }
 
-    // //category page
-    public function category(Request $request, $id)
-    {
-        if (! $id) {
-            throw new Exception('no category id provided!');
-        }
-        $categories = $this->bagistoApi->getCategories();
-
-        return view('category', [
-            'categories'       => $categories,
-        ]);
-
+    public function category(Request $request, $id) {
+        $category = $this->categoryRepository->findOrFail($id);
+        $products = $this->productRepository->getAll(['category_id' => $id]);
+        $categories = $this->categoryRepository->getVisibleCategoryTree(core()->getCurrentChannel()->root_category_id);
+        return view('category', compact('category', 'products', 'categories'));
     }
 
-    // //all categories page
-    public function categories(Request $request)
-    {
-        $categories = $this->bagistoApi->getCategories();
-
-        return view('categories', [
-            'categories'       => $categories,
-        ]);
-
+    public function categories(Request $request) {
+        $categories = $this->categoryRepository->getVisibleCategoryTree(core()->getCurrentChannel()->root_category_id);
+        return view('categories', compact('categories'));
     }
 
-    // //all products page
-    public function products(Request $request)
-    {
-        $categories = $this->bagistoApi->getCategories();
-        $featuredProducts = $this->bagistoApi->getFeaturedProducts();
-        $products = $this->bagistoApi->getProducts([
-            'limit'=> 12,
-            'page' => $request->query('page', 1),
-        ]);
-
-        return view('products', [
-            'categories'       => $categories,
-            'featuredProducts' => $featuredProducts,
-            'products'         => $products,
-        ]);
-
+    public function products(Request $request) {
+        $products = $this->productRepository->getAll($request->all());
+        $categories = $this->categoryRepository->getVisibleCategoryTree(core()->getCurrentChannel()->root_category_id);
+        return view('products', compact('products', 'categories'));
     }
 
-    // //contact us page
-    public function contact(Request $request)
-    {
-        $categories = $this->bagistoApi->getCategories();
-
-        return view('contact', [
-            'categories'       => $categories,
-        ]);
-
+    public function contact(Request $request) {
+        $categories = $this->categoryRepository->getVisibleCategoryTree(core()->getCurrentChannel()->root_category_id);
+        return view('contact', compact('categories'));
     }
 }

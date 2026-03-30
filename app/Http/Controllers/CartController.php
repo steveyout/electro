@@ -2,38 +2,31 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\BagistoApiService;
 use Illuminate\Http\Request;
+use Webkul\Checkout\Facades\Cart;
 
 class CartController extends Controller
 {
-    protected BagistoApiService $bagistoApi;
-
-    public function __construct(BagistoApiService $bagistoApiService)
-    {
-        $this->bagistoApi = $bagistoApiService;
-    }
-
-    // //cart page
     public function addToCart(Request $request, $id)
     {
-        if (! $id) {
-            throw new Exception('no product id provided!');
+        try {
+            // This handles sessions, taxes, and inventory automatically
+            $cart = Cart::addProduct($id, [
+                'product_id' => $id,
+                'quantity'   => $request->input('quantity', 1)
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Item added to cart.',
+                'cart'    => Cart::getCart(), // Returns full cart object for your header badge
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
         }
-
-        $csrfToken = $request->cookie('XSRF-TOKEN');
-
-        $parameters=[
-            'product_id'=>$id,
-            'is_buy_now'=>0,
-            'quantity'=>1
-        ];
-        $cart = $this->bagistoApi->addToCart($id, $csrfToken,$parameters);
-
-        return response()->json([
-            'success'    => true,
-            'cart'       => $cart,
-        ]);
-
     }
 }

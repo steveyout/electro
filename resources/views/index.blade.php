@@ -1,507 +1,316 @@
 @include('partials.header')
-<!-- Carousel Start -->
 
+@php
+    /**
+     * Helper function for rendering product cards using your custom routes.
+     */
+    $renderProductCard = function($product) {
+        if (!$product) return '';
 
-@if(count($featuredProducts['data'])>0)
+        $minP = $product->getTypeInstance()->getMinimalPrice();
+        $regP = $product->price;
+        $disc = ($regP > 0) ? round((($regP - $minP) / $regP) * 100) : 0;
 
-<div class="container-fluid carousel bg-light px-0">
-    <div class="row g-0 justify-content-end">
+        // Using your custom route from web.php
+        $productUrl = route('shop.home.product', $product->id);
 
-        <div class="col-12 col-lg-7 col-xl-9">
-            <div class="header-carousel owl-carousel bg-light py-5">
-                @foreach($featuredProducts['data'] as $product)
-                <div class="row g-0 header-carousel-item align-items-center">
-                    <div class="col-xl-6 carousel-img wow fadeInLeft" data-wow-delay="0.1s">
-                        <img src="{{$product['images'][0]['original_image_url']}}" class="img-fluid w-100" alt="Image">
-                    </div>
-                    <div class="col-xl-6 carousel-content p-4">
-                        <h4 class="text-uppercase fw-bold mb-4 wow fadeInRight" data-wow-delay="0.1s"
-                            style="letter-spacing: 3px;">{{$product['prices']['final']['formatted_price']}}</h4>
-                        <h1 class="display-3 text-capitalize mb-4 wow fadeInRight" data-wow-delay="0.3s">{{$product['name']}}</h1>
-                        <p class="text-dark wow fadeInRight" data-wow-delay="0.5s">Terms and Condition Apply</p>
-                        <a class="btn btn-primary rounded-pill py-3 px-5 wow fadeInRight" data-wow-delay="0.7s"
-                           href="{{config('app.url')}}/product/{{$product['id']}}}}">Shop Now</a>
+        return '
+        <div class="product-item rounded border bg-white h-100">
+            <div class="position-relative overflow-hidden p-3">
+                ' . ($disc > 0 ? '<div class="discount-badge">' . $disc . '% <br> <span>off</span></div>' : '') . '
+                <img src="' . $product->base_image_url . '" class="img-fluid w-100" style="height:180px; object-fit:contain;" alt="' . $product->name . '">
+                <div class="product-action">
+                    <a class="btn btn-outline-primary btn-square mx-1" href="' . $productUrl . '"><i class="fa fa-eye"></i></a>
+                    <a class="btn btn-outline-primary btn-square mx-1 add-cart" id="' . $product->id . '" href="#"><i class="fa fa-shopping-cart"></i></a>
+                </div>
+            </div>
+            <div class="text-center p-3 pt-0">
+                <button id="' . $product->id . '" class="btn btn-primary w-100 mb-2 add-cart py-2">Add to cart</button>
+                <a class="h6 d-block text-truncate mb-2 text-decoration-none" href="' . $productUrl . '">' . $product->name . '</a>
+                <div class="d-flex justify-content-center align-items-center">
+                    <span class="text-primary fw-bold me-2">' . core()->currency($minP) . '</span>
+                    ' . ($minP < $regP ? '<span class="text-muted text-decoration-line-through small">' . core()->currency($regP) . '</span>' : '') . '
+                </div>
+            </div>
+        </div>';
+    };
+@endphp
+
+@if($featuredProducts->count() > 0)
+    <div class="container-fluid carousel bg-light px-0">
+        <div class="row g-0 justify-content-end">
+            <div class="col-12 col-lg-7 col-xl-9">
+                <div class="header-carousel owl-carousel bg-light py-5">
+                    @foreach($featuredProducts as $product)
+                        @php $minPrice = $product->getTypeInstance()->getMinimalPrice(); @endphp
+                        <div class="row g-0 header-carousel-item align-items-center">
+                            <div class="col-xl-6 carousel-img wow fadeInLeft" data-wow-delay="0.1s">
+                                <img src="{{ $product->base_image_url }}" class="img-fluid w-100" alt="{{ $product->name }}">
+                            </div>
+                            <div class="col-xl-6 carousel-content p-4">
+                                <h4 class="text-uppercase fw-bold mb-4 wow fadeInRight" data-wow-delay="0.1s" style="letter-spacing: 3px;">
+                                    {{ core()->currency($minPrice) }}
+                                </h4>
+                                <h1 class="display-3 text-capitalize mb-4 wow fadeInRight" data-wow-delay="0.3s">{{ $product->name }}</h1>
+                                <p class="text-dark wow fadeInRight" data-wow-delay="0.5s">Terms and Condition Apply</p>
+                                <a class="btn btn-primary rounded-pill py-3 px-5 wow fadeInRight" data-wow-delay="0.7s"
+                                   href="{{ route('shop.home.product', $product->id) }}">Shop Now</a>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            @php $firstProduct = $featuredProducts->first(); @endphp
+            @if($firstProduct)
+                <div class="col-12 col-lg-5 col-xl-3 wow fadeInRight" data-wow-delay="0.1s">
+                    <div class="carousel-header-banner h-100">
+                        <img src="{{ $firstProduct->base_image_url }}" class="img-fluid w-100 h-100" style="object-fit: cover;" alt="Banner">
+                        <div class="carousel-banner-offer">
+                            @php
+                                $minP = $firstProduct->getTypeInstance()->getMinimalPrice();
+                                $regP = $firstProduct->price;
+                                $discount = $regP - $minP;
+                            @endphp
+                            <p class="bg-primary text-white rounded fs-5 py-2 px-4 mb-0 me-3">
+                                Save {{ core()->currency($discount > 0 ? $discount : 0) }}
+                            </p>
+                            <p class="text-primary fs-5 fw-bold mb-0">Special Offer</p>
+                        </div>
+                        <div class="carousel-banner">
+                            <div class="carousel-banner-content text-center p-4">
+                                <a href="#" class="d-block mb-2 text-white">{{ core()->currency($minP) }}</a>
+                                <a href="#" class="d-block text-white fs-3">{{ $firstProduct->name }}</a>
+                                <span class="text-primary fs-5">{{ core()->currency($minP) }}</span>
+                            </div>
+                            <a href="{{ route('shop.home.product', $firstProduct->id) }}" class="btn btn-primary rounded-pill py-2 px-4">
+                                <i class="fas fa-shopping-cart me-2"></i> Shop Now
+                            </a>
+                        </div>
                     </div>
                 </div>
-                @endforeach
-            </div>
+            @endif
         </div>
-
-        <div class="col-12 col-lg-5 col-xl-3 wow fadeInRight" data-wow-delay="0.1s">
-            <div class="carousel-header-banner h-100">
-                <img src="{{$products['data'][0]['images'][0]['original_image_url']}}" class="img-fluid w-100 h-100" style="object-fit: cover;" alt="Image">
-                <div class="carousel-banner-offer">
-                    <p class="bg-primary text-white rounded fs-5 py-2 px-4 mb-0 me-3">Save
-                        @php
-                        $int =floatval($products['data'][0]['prices']['regular']['price']);
-                        $special = floatval($products['data'][0]['prices']['final']['price']);
-                        $original=$products['data'][0]['prices']['final']['formatted_price'];
-                        $symbol= substr($original, 0, 1);
-                        $discount=$int-$special
-                        @endphp
-               {{$symbol}}{{$discount}}
-</p>
-<p class="text-primary fs-5 fw-bold mb-0">Special Offer</p>
-</div>
-<div class="carousel-banner">
-<div class="carousel-banner-content text-center p-4">
-<a href="#" class="d-block mb-2">{{$featuredProducts['data'][0]['prices']['final']['formatted_price']}}</a>
-<a href="#" class="d-block text-white fs-3">{{$featuredProducts['data'][0]['name']}}</a>
-<del class="me-2 text-white fs-5">{{$featuredProducts['data'][0]['prices']['regular']['formatted_price']}}</del>
-<span class="text-primary fs-5">{{$featuredProducts['data'][0]['prices']['final']['formatted_price']}}</span>
-</div>
-<a href="{{config('app.url')}}/product/{{$featuredProducts['data'][0]['id']}}}}" class="btn btn-primary rounded-pill py-2 px-4"><i
-    class="fas fa-shopping-cart me-2"></i> Shop Now</a>
-</div>
-</div>
-</div>
-</div>
-</div>
+    </div>
 @endif
-<!-- Carousel End -->
 
-<!-- Searvices Start -->
 <div class="container-fluid px-0">
-<div class="row g-0">
-<div class="col-6 col-md-4 col-lg-2 border-start border-end wow fadeInUp" data-wow-delay="0.1s">
-<div class="p-4">
-<div class="d-inline-flex align-items-center">
-<i class="fa fa-sync-alt fa-2x text-primary"></i>
-<div class="ms-4">
-<h6 class="text-uppercase mb-2">Free Return</h6>
-<p class="mb-0">30 days money back guarantee!</p>
+    <div class="row g-0">
+        @php
+            $services = [
+                ['icon' => 'fa-sync-alt', 'title' => 'Free Return', 'desc' => '30 days money back guarantee!'],
+                ['icon' => 'fab fa-telegram-plane', 'title' => 'Free Shipping', 'desc' => 'Free shipping on all order'],
+                ['icon' => 'fas fa-life-ring', 'title' => 'Support 24/7', 'desc' => 'We support online 24 hrs a day'],
+                ['icon' => 'fas fa-credit-card', 'title' => 'Receive Gift Card', 'desc' => 'Recieve gift all over oder $50'],
+                ['icon' => 'fas fa-lock', 'title' => 'Secure Payment', 'desc' => 'We Value Your Security'],
+                ['icon' => 'fas fa-blog', 'title' => 'Online Service', 'desc' => 'Free return products in 30 days']
+            ];
+        @endphp
+        @foreach($services as $index => $service)
+            <div class="col-6 col-md-4 col-lg-2 border-end wow fadeInUp" data-wow-delay="{{ 0.1 * ($index + 1) }}s">
+                <div class="p-4 text-center">
+                    <i class="{{ $service['icon'] }} fa-2x text-primary mb-2"></i>
+                    <h6 class="text-uppercase mb-1" style="font-size: 12px;">{{ $service['title'] }}</h6>
+                    <p class="mb-0 small" style="font-size: 10px;">{{ $service['desc'] }}</p>
+                </div>
+            </div>
+        @endforeach
+    </div>
 </div>
-</div>
-</div>
-</div>
-<div class="col-6 col-md-4 col-lg-2 border-end wow fadeInUp" data-wow-delay="0.2s">
-<div class="p-4">
-<div class="d-flex align-items-center">
-<i class="fab fa-telegram-plane fa-2x text-primary"></i>
-<div class="ms-4">
-<h6 class="text-uppercase mb-2">Free Shipping</h6>
-<p class="mb-0">Free shipping on all order</p>
-</div>
-</div>
-</div>
-</div>
-<div class="col-6 col-md-4 col-lg-2 border-end wow fadeInUp" data-wow-delay="0.3s">
-<div class="p-4">
-<div class="d-flex align-items-center">
-<i class="fas fa-life-ring fa-2x text-primary"></i>
-<div class="ms-4">
-<h6 class="text-uppercase mb-2">Support 24/7</h6>
-<p class="mb-0">We support online 24 hrs a day</p>
-</div>
-</div>
-</div>
-</div>
-<div class="col-6 col-md-4 col-lg-2 border-end wow fadeInUp" data-wow-delay="0.4s">
-<div class="p-4">
-<div class="d-flex align-items-center">
-<i class="fas fa-credit-card fa-2x text-primary"></i>
-<div class="ms-4">
-<h6 class="text-uppercase mb-2">Receive Gift Card</h6>
-<p class="mb-0">Recieve gift all over oder $50</p>
-</div>
-</div>
-</div>
-</div>
-<div class="col-6 col-md-4 col-lg-2 border-end wow fadeInUp" data-wow-delay="0.5s">
-<div class="p-4">
-<div class="d-flex align-items-center">
-<i class="fas fa-lock fa-2x text-primary"></i>
-<div class="ms-4">
-<h6 class="text-uppercase mb-2">Secure Payment</h6>
-<p class="mb-0">We Value Your Security</p>
-</div>
-</div>
-</div>
-</div>
-<div class="col-6 col-md-4 col-lg-2 border-end wow fadeInUp" data-wow-delay="0.6s">
-<div class="p-4">
-<div class="d-flex align-items-center">
-<i class="fas fa-blog fa-2x text-primary"></i>
-<div class="ms-4">
-<h6 class="text-uppercase mb-2">Online Service</h6>
-<p class="mb-0">Free return products in 30 days</p>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<!-- Searvices End -->
 
-<!-- Products Offer Start -->
-<div class="container-fluid bg-light py-5">
-<div class="container">
-<div class="row g-4">
-<div class="col-lg-6 wow fadeInLeft" data-wow-delay="0.2s">
-<a href="#" class="d-flex align-items-center justify-content-between border bg-white rounded p-4">
-<div>
-<p class="text-muted mb-3">Find The Best Camera for You!</p>
-<h3 class="text-primary">Smart Camera</h3>
-<h1 class="display-3 text-secondary mb-0">40% <span
-        class="text-primary fw-normal">Off</span></h1>
-</div>
-<img src="img/product-1.png" class="img-fluid" alt="">
-</a>
-</div>
-<div class="col-lg-6 wow fadeInRight" data-wow-delay="0.3s">
-<a href="#" class="d-flex align-items-center justify-content-between border bg-white rounded p-4">
-<div>
-<p class="text-muted mb-3">Find The Best Whatches for You!</p>
-<h3 class="text-primary">Smart Whatch</h3>
-<h1 class="display-3 text-secondary mb-0">20% <span
-        class="text-primary fw-normal">Off</span></h1>
-</div>
-<img src="img/product-2.png" class="img-fluid" alt="">
-</a>
-</div>
-</div>
-</div>
-</div>
-<!-- Products Offer End -->
-
-
-<!-- Our Products Start -->
 <div class="container-fluid product py-5">
-<div class="container py-5">
-<div class="tab-class">
-<div class="row g-4">
-<div class="col-lg-4 text-start wow fadeInLeft" data-wow-delay="0.1s">
-<h1>Our Products</h1>
-</div>
-<div class="col-lg-8 text-end wow fadeInRight" data-wow-delay="0.1s">
-<ul class="nav nav-pills d-inline-flex text-center mb-5">
-<li class="nav-item mb-4">
-    <a class="d-flex mx-2 py-2 bg-light rounded-pill active" data-bs-toggle="pill"
-       href="#tab-1">
-        <span class="text-dark" style="width: 130px;">All Products</span>
-    </a>
-</li>
-<li class="nav-item mb-4">
-    <a class="d-flex py-2 mx-2 bg-light rounded-pill" data-bs-toggle="pill" href="#tab-2">
-        <span class="text-dark" style="width: 130px;">New Arrivals</span>
-    </a>
-</li>
-<li class="nav-item mb-4">
-    <a class="d-flex mx-2 py-2 bg-light rounded-pill" data-bs-toggle="pill" href="#tab-3">
-        <span class="text-dark" style="width: 130px;">Featured</span>
-    </a>
-</li>
-</ul>
-</div>
-</div>
-<div class="tab-content">
-<div id="tab-1" class="tab-pane fade show p-0 active">
-<div class="row g-4">
-    @if(count($products['data'])>0)
-    @foreach($products['data'] as $product)
-<div class="col-md-6 col-lg-4 col-xl-3">
-    <div class="product-item rounded wow fadeInUp" data-wow-delay="0.1s">
-        <div class="product-item-inner border rounded">
-            <div class="product-item-inner-item">
-                <img src="{{$product['images'][0]['original_image_url']}}" class="img-fluid w-100 rounded-top" alt="">
-                @if($product['is_new'])
-                    <div class="product-new">New</div>
-                @endif
-                @if($product['on_sale'])
-                    <div class="product-new">Offer</div>
-                @endif
-                <div class="product-details">
-                    <a href="{{config('app.url')}}/product/{{$product['id']}}"><i class="fa fa-eye fa-1x"></i></a>
+    <div class="container-fluid px-lg-5">
+        <div class="tab-class">
+            <div class="row g-4 align-items-center mb-4">
+                <div class="col-lg-4 text-start"><h1>Our Products</h1></div>
+                <div class="col-lg-8 text-end">
+                    <ul class="nav nav-pills d-inline-flex text-center">
+                        <li class="nav-item"><a class="d-flex mx-2 py-2 bg-light rounded-pill active" data-bs-toggle="pill" href="#tab-1"><span class="text-dark" style="width: 130px;">All Products</span></a></li>
+                        <li class="nav-item"><a class="d-flex py-2 mx-2 bg-light rounded-pill" data-bs-toggle="pill" href="#tab-2"><span class="text-dark" style="width: 130px;">New Arrivals</span></a></li>
+                    </ul>
                 </div>
             </div>
-            <div class="text-center rounded-bottom p-4">
-                <a href="{{config('app.url')}}/product/{{$product['id']}}" class="d-block h4">{{$product['name']}}</a>
-                @if($product['on_sale'])
-                <del class="me-2 fs-5">{{$product['prices']['regular']['formatted_price']}}</del>
-                @endif
-                <span class="text-primary fs-5 product-price">{{$product['prices']['final']['formatted_price']}}</span>
-            </div>
-        </div>
-        <div
-            class="product-item-add border border-top-0 rounded-bottom text-center p-4 pt-0">
-            <button id="{{$product['id']}}"
-               class="btn btn-primary border-secondary rounded-pill py-2 px-4 mb-4 add-cart" ><i
-                    class="fas fa-shopping-cart me-2"></i> Add To Cart</button>
-            <div class="d-flex justify-content-center align-items-center">
-                <div class="d-flex">
-                    <div href="#"
-                       class="text-primary d-flex align-items-center justify-content-center me-3"><span
-                            class="rounded-circle btn-sm-square border"><i
-                                class="fas fa-random"></i></span></div>
-                    <div href="#"
-                       class="text-primary d-flex align-items-center justify-content-center me-0"><span
-                            class="rounded-circle btn-sm-square border"><i
-                                class="fas fa-heart"></i></span></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-    @endforeach
-    @endif
-</div>
-</div>
-<div id="tab-2" class="tab-pane fade show p-0">
-<div class="row g-4">
-
-    @if(count($newProducts['data'])>0)
-        @foreach($newProducts['data'] as $product)
-            <div class="col-md-6 col-lg-4 col-xl-3">
-                <div class="product-item rounded wow fadeInUp" data-wow-delay="0.1s">
-                    <div class="product-item-inner border rounded">
-                        <div class="product-item-inner-item">
-                            <img src="{{$product['images'][0]['original_image_url']}}" class="img-fluid w-100 rounded-top" alt="">
-                            @if($product['is_new'])
-                                <div class="product-new">New</div>
-                            @endif
-                            @if($product['on_sale'])
-                                <div class="product-new">Offer</div>
-                            @endif
-                            <div class="product-details">
-                                <a href="{{config('app.url')}}/product/{{$product['id']}}"><i class="fa fa-eye fa-1x"></i></a>
-                            </div>
-                        </div>
-                        <div class="text-center rounded-bottom p-4">
-                            <a href="{{config('app.url')}}/product/{{$product['id']}}" class="d-block h4">{{$product['name']}}</a>
-                            @if($product['on_sale'])
-                                <del class="me-2 fs-5">{{$product['prices']['regular']['formatted_price']}}</del>
-                            @endif
-                            <span class="text-primary fs-5 product-price">{{$product['prices']['final']['formatted_price']}}</span>
+            <div class="tab-content">
+                @php $tabs = ['tab-1' => $products, 'tab-2' => $newProducts]; @endphp
+                @foreach($tabs as $id => $collection)
+                    <div id="{{ $id }}" class="tab-pane fade show p-0 {{ $loop->first ? 'active' : '' }}">
+                        <div class="row g-3">
+                            @foreach($collection->take(10) as $product)
+                                <div class="col-6 col-md-4 col-lg-2-4">
+                                    {!! $renderProductCard($product) !!}
+                                </div>
+                            @endforeach
                         </div>
                     </div>
-                    <div
-                        class="product-item-add border border-top-0 rounded-bottom text-center p-4 pt-0">
-                        <button id="{{$product['id']}}"
-                           class="btn btn-primary border-secondary rounded-pill py-2 px-4 mb-4 add-cart"><i
-                                class="fas fa-shopping-cart me-2"></i> Add To Cart<button>
-                        <div class="d-flex justify-content-center align-items-center">
-                            <div class="d-flex">
-                                <div href="#"
-                                     class="text-primary d-flex align-items-center justify-content-center me-3"><span
-                                        class="rounded-circle btn-sm-square border"><i
-                                            class="fas fa-random"></i></span></div>
-                                <div href="#"
-                                     class="text-primary d-flex align-items-center justify-content-center me-0"><span
-                                        class="rounded-circle btn-sm-square border"><i
-                                            class="fas fa-heart"></i></span></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @endforeach
-    @endif
-</div>
-</div>
-<div id="tab-3" class="tab-pane fade show p-0">
-<div class="row g-4">
-    @if(count($featuredProducts['data'])>0)
-        @foreach($featuredProducts['data'] as $product)
-            <div class="col-md-6 col-lg-4 col-xl-3">
-                <div class="product-item rounded wow fadeInUp" data-wow-delay="0.1s">
-                    <div class="product-item-inner border rounded">
-                        <div class="product-item-inner-item">
-                            <img src="{{$product['images'][0]['original_image_url']}}" class="img-fluid w-100 rounded-top" alt="">
-                            @if($product['is_new'])
-                                <div class="product-new">New</div>
-                            @endif
-                            @if($product['on_sale'])
-                                <div class="product-new">Offer</div>
-                            @endif
-                            <div class="product-details">
-                                <a href="{{config('app.url')}}/product/{{$product['id']}}"><i class="fa fa-eye fa-1x"></i></a>
-                            </div>
-                        </div>
-                        <div class="text-center rounded-bottom p-4">
-                            <a href="{{config('app.url')}}/product/{{$product['id']}}" class="d-block h4">{{$product['name']}}</a>
-                            @if($product['on_sale'])
-                                <del class="me-2 fs-5">{{$product['prices']['regular']['formatted_price']}}</del>
-                            @endif
-                            <span class="text-primary fs-5 product-price">{{$product['prices']['final']['formatted_price']}}</span>
-                        </div>
-                    </div>
-                    <div
-                        class="product-item-add border border-top-0 rounded-bottom text-center p-4 pt-0">
-                        <button id="{{$product['id']}}"
-                           class="btn btn-primary border-secondary rounded-pill py-2 px-4 mb-4 add-cart"><i
-                                class="fas fa-shopping-cart me-2"></i> Add To Cart</button>
-                        <div class="d-flex justify-content-center align-items-center">
-                            <div class="d-flex">
-                                <div href="#"
-                                     class="text-primary d-flex align-items-center justify-content-center me-3"><span
-                                        class="rounded-circle btn-sm-square border"><i
-                                            class="fas fa-random"></i></span></div>
-                                <div href="#"
-                                     class="text-primary d-flex align-items-center justify-content-center me-0"><span
-                                        class="rounded-circle btn-sm-square border"><i
-                                            class="fas fa-heart"></i></span></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @endforeach
-    @endif
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<!-- Our Products End -->
-
-<!-- Products Offer Start -->
-<!-- Product Banner Start -->
-<div class="container-fluid py-5">
-    <div class="container">
-        <div class="row g-4">
-            @if(count($categories['data'])>0)
-                @foreach($categories['data'] as $category)
-            <div class="col-lg-6 wow fadeInLeft" data-wow-delay="0.1s">
-                <a href="{{config('app.url')}}/category/{{$category['id']}}">
-                    <div class="bg-primary rounded position-relative">
-                        <img src="{{$category['banner_url']}}" class="img-fluid w-100 rounded" alt="">
-                        <div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center rounded p-4"
-                             style="background: rgba(255, 255, 255, 0.5);">
-                            <h3 class="display-5 text-primary">{{$category['name']}}</h3>
-                            <a href="{{config('app.url')}}/category/{{$category['id']}}" class="btn btn-primary rounded-pill align-self-start py-2 px-4">Shop Now</a>
-                        </div>
-                    </div>
-                </a>
-            </div>
                 @endforeach
-            @endif
-
-        </div>
-    </div>
-</div>
-
-<!-- Products Offer End -->
-
-<!-- Product List Start -->
-<div class="container-fluid products productList overflow-hidden">
-<div class="container products-mini py-5">
-<div class="mx-auto text-center mb-5" style="max-width: 900px;">
-<h4 class="text-primary border-bottom border-primary border-2 d-inline-block p-2 title-border-radius wow fadeInUp"
-data-wow-delay="0.1s">Products</h4>
-<h1 class="mb-0 display-3 wow fadeInUp" data-wow-delay="0.3s">All Product Items</h1>
-</div>
-<div class="productList-carousel owl-carousel pt-4 wow fadeInUp" data-wow-delay="0.3s">
-    @if(count($products['data'])>0)
-        @foreach($products['data'] as $product)
-            <div class="productImg-carousel owl-carousel productList-item">
-<div class="productImg-item products-mini-item border">
-<div class="row g-0">
-<div class="col-5">
-    <div class="products-mini-img border-end h-100">
-        <img src="{{$product['images'][0]['original_image_url']}}" class="img-fluid w-100 h-100" alt="Image">
-        <div class="products-mini-icon rounded-circle bg-primary">
-            <a href="{{config('app.url')}}/product/{{$product['id']}}"><i class="fa fa-eye fa-1x text-white"></i></a>
-        </div>
-    </div>
-</div>
-<div class="col-7">
-    <div class="products-mini-content p-3">
-        @if($product['is_new'])
-            <div class="product-new">New</div>
-        @endif
-        @if($product['on_sale'])
-            <div class="product-new">Offer</div>
-        @endif
-        <a href="{{config('app.url')}}/product/{{$product['id']}}" class="d-block h4">{{$product['name']}}</a>
-            @if($product['on_sale'])
-                <del class="me-2 fs-5">{{$product['prices']['regular']['formatted_price']}}</del>
-            @endif
-            <span class="text-primary fs-5 product-price">{{$product['prices']['final']['formatted_price']}}</span>
-    </div>
-</div>
-</div>
-<div class="products-mini-add border p-3">
-    <button id="{{$product['id']}}" class="btn btn-primary border-secondary rounded-pill py-2 px-4 add-cart"><i
-            class="fas fa-shopping-cart me-2"></i> Add To Cart</button>
-<div class="d-flex">
-    <a href="#"
-       class="text-primary d-flex align-items-center justify-content-center me-3"><span
-            class="rounded-circle btn-sm-square border"><i
-                class="fas fa-random"></i></i></a>
-    <a href="#"
-       class="text-primary d-flex align-items-center justify-content-center me-0"><span
-            class="rounded-circle btn-sm-square border"><i class="fas fa-heart"></i></a>
-</div>
-</div>
-</div>
             </div>
-        @endforeach
-    @endif
-
-</div>
-</div>
-</div>
-<!-- Product List End -->
-
-<!-- Bestseller Products Start -->
-<div class="container-fluid products pb-5">
-<div class="container products-mini py-5">
-<div class="mx-auto text-center mb-5" style="max-width: 700px;">
-<h4 class="text-primary mb-4 border-bottom border-primary border-2 d-inline-block p-2 title-border-radius wow fadeInUp"
-data-wow-delay="0.1s">Newest Products</h4>
-<p class="mb-0 wow fadeInUp" data-wow-delay="0.2s">Recently added products</p>
-</div>
-<div class="row g-4">
-    @if(count($newProducts['data'])>0)
-        @foreach($newProducts['data'] as $product)
-<div class="col-md-6 col-lg-6 col-xl-4 wow fadeInUp" data-wow-delay="0.1s">
-<div class="products-mini-item border">
-<div class="row g-0">
-<div class="col-5">
-    <div class="products-mini-img border-end h-100">
-        <img src="{{$product['images'][0]['original_image_url']}}" class="img-fluid w-100 h-100" alt="Image">
-        <div class="products-mini-icon rounded-circle bg-primary">
-            <a href="{{config('app.url')}}/product/{{$product['id']}}"><i class="fa fa-eye fa-1x text-white"></i></a>
         </div>
     </div>
 </div>
-<div class="col-7">
-    <div class="products-mini-content p-3">
-        <a href="{{config('app.url')}}/product/{{$product['id']}}" class="d-block h4">{{$product['name']}}</a>
-        @if($product['on_sale'])
-            <del class="me-2 fs-5">{{$product['prices']['regular']['formatted_price']}}</del>
-        @endif
-        <span class="text-primary fs-5 product-price">{{$product['prices']['final']['formatted_price']}}</span>
+
+<div class="container-fluid products py-5 bg-light">
+    <div class="container-fluid px-lg-5">
+        <div class="mx-auto text-center mb-5" style="max-width: 900px;">
+            <h4 class="text-primary border-bottom border-primary border-2 d-inline-block p-2">Products</h4>
+            <h1 class="mb-0 display-3">All Items</h1>
+        </div>
+        <div class="productList-carousel owl-carousel pt-4">
+            @foreach($products as $product)
+                <div class="h-100 px-1">{!! $renderProductCard($product) !!}</div>
+            @endforeach
+        </div>
     </div>
 </div>
+
+{{-- Promo Banner Section --}}
+<div class="container-fluid py-5">
+    <div class="container-fluid px-lg-5">
+        <div class="row g-4">
+            {{-- Banner 4 --}}
+            <div class="col-12 col-md-4">
+                <div class="promo-banner rounded overflow-hidden">
+                    {{-- THIS image has NO text in it --}}
+                    <img src="{{ asset('themes/shop/electro/images/banner-4.png') }}" alt="Gaming Gear">
+                </div>
+            </div>
+
+            {{-- Banner 5 --}}
+            <div class="col-12 col-md-4">
+                <div class="promo-banner rounded overflow-hidden">
+                    <img src="{{ asset('themes/shop/electro/images/banner-5.png') }}" alt="Smart Home">
+                </div>
+            </div>
+
+            {{-- Banner 6 --}}
+            <div class="col-12 col-md-4">
+                <div class="promo-banner rounded overflow-hidden">
+                    <img src="{{ asset('themes/shop/electro/images/banner-6.png') }}" alt="Wearables">
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-<div class="products-mini-add border p-3">
-    <button id="{{$product['id']}}" class="btn btn-primary border-secondary rounded-pill py-2 px-4 add-cart">
-        <i class="fas fa-shopping-cart me-2"></i> Add To Cart</button>
-<div class="d-flex">
-    <a href="#"
-       class="text-primary d-flex align-items-center justify-content-center me-3"><span
-            class="rounded-circle btn-sm-square border"><i
-                class="fas fa-random"></i></i></a>
-    <a href="#"
-       class="text-primary d-flex align-items-center justify-content-center me-0"><span
-            class="rounded-circle btn-sm-square border"><i class="fas fa-heart"></i></a>
-</div>
-</div>
-</div>
-</div>
-        @endforeach
-    @endif
 
 
-</div>
-</div>
+<div class="container-fluid products py-5">
+    <div class="container-fluid px-lg-5">
+        <div class="mx-auto text-center mb-5" style="max-width: 900px;">
+            <h4 class="text-primary border-bottom border-primary border-2 d-inline-block p-2">Newest Products</h4>
+            <h1 class="mb-0 display-3">Recently Added</h1>
+        </div>
+        <div class="productList-carousel owl-carousel pt-4">
+            @foreach($newProducts as $product)
+                <div class="h-100 px-1">{!! $renderProductCard($product) !!}</div>
+            @endforeach
+        </div>
+    </div>
 </div>
 
 
-<!-- Bestseller Products End -->
+
+@isset($homeCategories)
+    @foreach($homeCategories as $category)
+        @php
+            $categoryProducts = app('Webkul\Product\Repositories\ProductRepository')->getAll([
+                'category_id' => $category->id,
+            ])->take(10);
+        @endphp
+
+        @if($categoryProducts->count() > 0)
+            <div class="container-fluid products py-5 {{ $loop->even ? '' : 'bg-light' }}">
+                <div class="container-fluid px-lg-5">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div class="text-start">
+                            <h4 class="text-primary border-bottom border-primary border-2 d-inline-block p-2 mb-0" style="font-size: 1rem;">
+                                {{ $category->name }}
+                            </h4>
+                            <h2 class="display-6 mt-2">Shop {{ $category->name }}</h2>
+                        </div>
+                        <a href="{{ route('shop.home.category', $category->id) }}" class="btn btn-outline-primary rounded-pill px-4">
+                            View All <i class="fas fa-arrow-right ms-2"></i>
+                        </a>
+                    </div>
+
+                    <div class="productList-carousel owl-carousel pt-2">
+                        @foreach($categoryProducts as $product)
+                            <div class="h-100 px-1">
+                                {!! $renderProductCard($product) !!}
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            {{-- Promo Banner Section - Appears after the first category --}}
+            @if($loop->first)
+                <div class="container-fluid py-5">
+                    <div class="container-fluid px-lg-5">
+                        <div class="row g-4">
+                            {{-- Banner 4 --}}
+                            <div class="col-12 col-md-4">
+                                <div class="promo-banner rounded overflow-hidden">
+                                    {{-- THIS image has NO text in it --}}
+                                    <img src="{{ asset('themes/shop/electro/images/banner-4.png') }}" alt="Gaming Gear">
+                                </div>
+                            </div>
+
+                            {{-- Banner 5 --}}
+                            <div class="col-12 col-md-4">
+                                <div class="promo-banner rounded overflow-hidden">
+                                    <img src="{{ asset('themes/shop/electro/images/banner-5.png') }}" alt="Smart Home">
+                                </div>
+                            </div>
+
+                            {{-- Banner 6 --}}
+                            <div class="col-12 col-md-4">
+                                <div class="promo-banner rounded overflow-hidden">
+                                    <img src="{{ asset('themes/shop/electro/images/banner-6.png') }}" alt="Wearables">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        @endif
+    @endforeach
+@endisset
+
 @include('partials.footer')
 
-<!-- Bestseller Products End -->
+<style>
+    /* Grid and Carousel Styling */
+    @media (min-width: 992px) { .col-lg-2-4 { flex: 0 0 auto; width: 20%; } }
+    .productList-carousel .owl-stage-outer { padding: 5px 0; }
+    .productList-carousel .owl-item { padding: 0 8px; }
+    .product-item img { transition: transform 0.5s ease; height: 180px; object-fit: contain; }
+    .product-item:hover img { transform: scale(1.08); }
+
+    .discount-badge {
+        position: absolute; top: 10px; right: 10px; background: #ffb400; color: #000;
+        font-weight: bold; padding: 4px 8px; border-radius: 2px; line-height: 1.1;
+        text-align: center; z-index: 10; font-size: 13px;
+    }
+    .discount-badge span { font-size: 9px; text-transform: uppercase; display: block; }
+
+    .product-action {
+        position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(255, 255, 255, 0.6); opacity: 0; transition: 0.5s;
+    }
+    .product-item:hover .product-action { opacity: 1; }
+    .btn-square { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+
+    /* Owl Navigation Arrows */
+    .owl-nav .owl-prev, .owl-nav .owl-next {
+        position: absolute; top: 50%; transform: translateY(-50%);
+        background: var(--bs-primary) !important; color: #fff !important;
+        width: 35px; height: 35px; border-radius: 50%; z-index: 15;
+    }
+    .owl-nav .owl-prev { left: 5px; }
+    .owl-nav .owl-next { right: 5px; }
+
+    .display-6 { font-weight: 700; font-size: 1.5rem; color: #333; }
+    @media (max-width: 768px) { .display-6 { font-size: 1.2rem; } }
+</style>
+
 
