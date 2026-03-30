@@ -2,7 +2,7 @@
 
 @php
     /**
-     * Helper function for rendering product cards using your custom routes.
+     * Helper function for rendering product cards with responsive pricing.
      */
     $renderProductCard = function($product) {
         if (!$product) return '';
@@ -11,7 +11,6 @@
         $regP = $product->price;
         $disc = ($regP > 0) ? round((($regP - $minP) / $regP) * 100) : 0;
 
-        // Using your custom route from web.php
         $productUrl = route('shop.home.product', $product->id);
 
         return '
@@ -27,8 +26,10 @@
             <div class="text-center p-3 pt-0">
                 <button id="' . $product->id . '" class="btn btn-primary w-100 mb-2 add-cart py-2">Add to cart</button>
                 <a class="h6 d-block text-truncate mb-2 text-decoration-none" href="' . $productUrl . '">' . $product->name . '</a>
-                <div class="d-flex justify-content-center align-items-center">
-                    <span class="text-primary fw-bold me-2">' . core()->currency($minP) . '</span>
+
+
+                <div class="d-flex flex-column flex-md-row justify-content-center align-items-center">
+                    <span class="text-primary fw-bold me-md-2 mb-1 mb-md-0">' . core()->currency($minP) . '</span>
                     ' . ($minP < $regP ? '<span class="text-muted text-decoration-line-through small">' . core()->currency($regP) . '</span>' : '') . '
                 </div>
             </div>
@@ -36,64 +37,51 @@
     };
 @endphp
 
+{{-- Main Hero Carousel --}}
 @if($featuredProducts->count() > 0)
-    <div class="container-fluid carousel bg-light px-0">
-        <div class="row g-0 justify-content-end">
-            <div class="col-12 col-lg-7 col-xl-9">
+    <div class="container carousel bg-light my-5 rounded shadow-sm">
+        <div class="row g-0">
+            <div class="col-12">
                 <div class="header-carousel owl-carousel bg-light py-5">
                     @foreach($featuredProducts as $product)
                         @php $minPrice = $product->getTypeInstance()->getMinimalPrice(); @endphp
-                        <div class="row g-0 header-carousel-item align-items-center">
-                            <div class="col-xl-6 carousel-img wow fadeInLeft" data-wow-delay="0.1s">
-                                <img src="{{ $product->base_image_url }}" class="img-fluid w-100" alt="{{ $product->name }}">
-                            </div>
-                            <div class="col-xl-6 carousel-content p-4">
-                                <h4 class="text-uppercase fw-bold mb-4 wow fadeInRight" data-wow-delay="0.1s" style="letter-spacing: 3px;">
-                                    {{ core()->currency($minPrice) }}
-                                </h4>
-                                <h1 class="display-3 text-capitalize mb-4 wow fadeInRight" data-wow-delay="0.3s">{{ $product->name }}</h1>
-                                <p class="text-dark wow fadeInRight" data-wow-delay="0.5s">Terms and Condition Apply</p>
-                                <a class="btn btn-primary rounded-pill py-3 px-5 wow fadeInRight" data-wow-delay="0.7s"
-                                   href="{{ route('shop.home.product', $product->id) }}">Shop Now</a>
+                        <div class="header-carousel-item p-4">
+                            <div class="row align-items-center">
+                                {{-- Text Section --}}
+                                <div class="col-md-6 carousel-content text-start ps-lg-5">
+                                    <h5 class="text-muted fw-light mb-2">
+                                        Save Up To <span class="text-primary fw-bold">{{ core()->currency($product->price - $minPrice) }}</span> On
+                                    </h5>
+                                    <h2 class="fw-bold text-dark mb-3">
+                                        {{ $product->name }}
+                                    </h2>
+                                    {{-- Render HTML description --}}
+                                    <div class="text-secondary mb-4 small-desc">
+                                        {!! $product->short_description !!}
+                                    </div>
+                                    <a class="btn btn-primary rounded-pill py-2 px-5 fw-bold"
+                                       href="{{ route('shop.home.product', $product->id) }}">
+                                        Shop Now
+                                    </a>
+                                </div>
+                                {{-- Image Section --}}
+                                <div class="col-md-6 carousel-img text-center position-relative">
+                                    <div class="bg-circle-overlay"></div>
+                                    <img src="{{ $product->base_image_url }}"
+                                         class="img-fluid position-relative"
+                                         style="max-height: 380px; object-fit: contain; z-index: 2;"
+                                         alt="{{ $product->name }}">
+                                </div>
                             </div>
                         </div>
                     @endforeach
                 </div>
             </div>
-
-            @php $firstProduct = $featuredProducts->first(); @endphp
-            @if($firstProduct)
-                <div class="col-12 col-lg-5 col-xl-3 wow fadeInRight" data-wow-delay="0.1s">
-                    <div class="carousel-header-banner h-100">
-                        <img src="{{ $firstProduct->base_image_url }}" class="img-fluid w-100 h-100" style="object-fit: cover;" alt="Banner">
-                        <div class="carousel-banner-offer">
-                            @php
-                                $minP = $firstProduct->getTypeInstance()->getMinimalPrice();
-                                $regP = $firstProduct->price;
-                                $discount = $regP - $minP;
-                            @endphp
-                            <p class="bg-primary text-white rounded fs-5 py-2 px-4 mb-0 me-3">
-                                Save {{ core()->currency($discount > 0 ? $discount : 0) }}
-                            </p>
-                            <p class="text-primary fs-5 fw-bold mb-0">Special Offer</p>
-                        </div>
-                        <div class="carousel-banner">
-                            <div class="carousel-banner-content text-center p-4">
-                                <a href="#" class="d-block mb-2 text-white">{{ core()->currency($minP) }}</a>
-                                <a href="#" class="d-block text-white fs-3">{{ $firstProduct->name }}</a>
-                                <span class="text-primary fs-5">{{ core()->currency($minP) }}</span>
-                            </div>
-                            <a href="{{ route('shop.home.product', $firstProduct->id) }}" class="btn btn-primary rounded-pill py-2 px-4">
-                                <i class="fas fa-shopping-cart me-2"></i> Shop Now
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            @endif
         </div>
     </div>
 @endif
 
+{{-- Services Section --}}
 <div class="container-fluid px-0">
     <div class="row g-0">
         @php
@@ -118,6 +106,7 @@
     </div>
 </div>
 
+{{-- Featured Products Tabs --}}
 <div class="container-fluid product py-5">
     <div class="container-fluid px-lg-5">
         <div class="tab-class">
@@ -148,6 +137,7 @@
     </div>
 </div>
 
+{{-- Product Carousel Section --}}
 <div class="container-fluid products py-5 bg-light">
     <div class="container-fluid px-lg-5">
         <div class="mx-auto text-center mb-5" style="max-width: 900px;">
@@ -162,52 +152,30 @@
     </div>
 </div>
 
-{{-- Promo Banner Section --}}
+{{-- Static Promo Banners --}}
 <div class="container-fluid py-5">
     <div class="container-fluid px-lg-5">
         <div class="row g-4">
-            {{-- Banner 4 --}}
             <div class="col-12 col-md-4">
-                <div class="promo-banner rounded overflow-hidden">
-                    {{-- THIS image has NO text in it --}}
-                    <img src="{{ asset('themes/shop/electro/images/banner-4.png') }}" alt="Gaming Gear">
+                <div class="promo-banner rounded overflow-hidden shadow-sm">
+                    <img src="{{ asset('themes/shop/electro/images/banner-4.png') }}" class="img-fluid w-100" alt="Gaming Gear">
                 </div>
             </div>
-
-            {{-- Banner 5 --}}
             <div class="col-12 col-md-4">
-                <div class="promo-banner rounded overflow-hidden">
-                    <img src="{{ asset('themes/shop/electro/images/banner-5.png') }}" alt="Smart Home">
+                <div class="promo-banner rounded overflow-hidden shadow-sm">
+                    <img src="{{ asset('themes/shop/electro/images/banner-5.png') }}" class="img-fluid w-100" alt="Smart Home">
                 </div>
             </div>
-
-            {{-- Banner 6 --}}
             <div class="col-12 col-md-4">
-                <div class="promo-banner rounded overflow-hidden">
-                    <img src="{{ asset('themes/shop/electro/images/banner-6.png') }}" alt="Wearables">
+                <div class="promo-banner rounded overflow-hidden shadow-sm">
+                    <img src="{{ asset('themes/shop/electro/images/banner-6.png') }}" class="img-fluid w-100" alt="Wearables">
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-
-<div class="container-fluid products py-5">
-    <div class="container-fluid px-lg-5">
-        <div class="mx-auto text-center mb-5" style="max-width: 900px;">
-            <h4 class="text-primary border-bottom border-primary border-2 d-inline-block p-2">Newest Products</h4>
-            <h1 class="mb-0 display-3">Recently Added</h1>
-        </div>
-        <div class="productList-carousel owl-carousel pt-4">
-            @foreach($newProducts as $product)
-                <div class="h-100 px-1">{!! $renderProductCard($product) !!}</div>
-            @endforeach
-        </div>
-    </div>
-</div>
-
-
-
+{{-- Dynamic Category Sections --}}
 @isset($homeCategories)
     @foreach($homeCategories as $category)
         @php
@@ -240,37 +208,6 @@
                     </div>
                 </div>
             </div>
-
-            {{-- Promo Banner Section - Appears after the first category --}}
-            @if($loop->first)
-                <div class="container-fluid py-5">
-                    <div class="container-fluid px-lg-5">
-                        <div class="row g-4">
-                            {{-- Banner 4 --}}
-                            <div class="col-12 col-md-4">
-                                <div class="promo-banner rounded overflow-hidden">
-                                    {{-- THIS image has NO text in it --}}
-                                    <img src="{{ asset('themes/shop/electro/images/banner-4.png') }}" alt="Gaming Gear">
-                                </div>
-                            </div>
-
-                            {{-- Banner 5 --}}
-                            <div class="col-12 col-md-4">
-                                <div class="promo-banner rounded overflow-hidden">
-                                    <img src="{{ asset('themes/shop/electro/images/banner-5.png') }}" alt="Smart Home">
-                                </div>
-                            </div>
-
-                            {{-- Banner 6 --}}
-                            <div class="col-12 col-md-4">
-                                <div class="promo-banner rounded overflow-hidden">
-                                    <img src="{{ asset('themes/shop/electro/images/banner-6.png') }}" alt="Wearables">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endif
         @endif
     @endforeach
 @endisset
@@ -278,13 +215,31 @@
 @include('partials.footer')
 
 <style>
-    /* Grid and Carousel Styling */
+    /* Global Container Control */
+    .container.carousel { max-width: 1200px; overflow: hidden; }
+
+    /* Product Grid & Card Styling */
     @media (min-width: 992px) { .col-lg-2-4 { flex: 0 0 auto; width: 20%; } }
-    .productList-carousel .owl-stage-outer { padding: 5px 0; }
-    .productList-carousel .owl-item { padding: 0 8px; }
     .product-item img { transition: transform 0.5s ease; height: 180px; object-fit: contain; }
     .product-item:hover img { transform: scale(1.08); }
 
+    /* Pricing Mobile Fix */
+    @media (max-width: 767px) {
+        .product-item .d-flex.flex-column { gap: 2px; }
+        .product-item .text-decoration-line-through { font-size: 0.75rem; opacity: 0.8; }
+        .product-item .h6 { font-size: 0.85rem; margin-bottom: 5px !important; }
+    }
+
+    /* Carousel Content Styling */
+    .carousel-content h2 { font-size: 2rem; letter-spacing: -0.5px; }
+    .small-desc { font-size: 0.95rem; color: #6c757d; max-width: 450px; line-height: 1.6; }
+    .bg-circle-overlay {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 320px; height: 320px; background: radial-gradient(circle, #ffffff 0%, rgba(255,255,255,0) 70%);
+        border-radius: 50%; z-index: 1;
+    }
+
+    /* Discount Badge */
     .discount-badge {
         position: absolute; top: 10px; right: 10px; background: #ffb400; color: #000;
         font-weight: bold; padding: 4px 8px; border-radius: 2px; line-height: 1.1;
@@ -292,6 +247,7 @@
     }
     .discount-badge span { font-size: 9px; text-transform: uppercase; display: block; }
 
+    /* Action Buttons */
     .product-action {
         position: absolute; width: 100%; height: 100%; top: 0; left: 0;
         display: flex; align-items: center; justify-content: center;
@@ -300,17 +256,9 @@
     .product-item:hover .product-action { opacity: 1; }
     .btn-square { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
 
-    /* Owl Navigation Arrows */
-    .owl-nav .owl-prev, .owl-nav .owl-next {
-        position: absolute; top: 50%; transform: translateY(-50%);
-        background: var(--bs-primary) !important; color: #fff !important;
-        width: 35px; height: 35px; border-radius: 50%; z-index: 15;
-    }
-    .owl-nav .owl-prev { left: 5px; }
-    .owl-nav .owl-next { right: 5px; }
-
-    .display-6 { font-weight: 700; font-size: 1.5rem; color: #333; }
-    @media (max-width: 768px) { .display-6 { font-size: 1.2rem; } }
+    /* Promo Banner Shadows */
+    .promo-banner { transition: transform 0.3s ease; }
+    .promo-banner:hover { transform: translateY(-5px); }
 </style>
 
 
