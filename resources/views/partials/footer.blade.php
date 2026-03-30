@@ -80,6 +80,11 @@
 
 <!-- Template Javascript -->
 <script src="{{ asset('themes/shop/electro/js/main.js') }}?v={{ time() }}"></script>
+
+
+<a href="https://wa.me/+254721966663" class="whatsapp-float-left" target="_blank" rel="noopener noreferrer">
+    <i class="fab fa-whatsapp my-float"></i>
+</a>
 </body>
 
 </html>
