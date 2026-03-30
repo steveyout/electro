@@ -39,39 +39,40 @@
 
 {{-- Main Hero Carousel --}}
 @if($featuredProducts->count() > 0)
-    <div class="container carousel bg-light my-5 rounded shadow-sm">
+    <div class="container my-5 shadow-sm rounded overflow-hidden" style="background: #F4F6F7;">
         <div class="row g-0">
-            <div class="col-12">
-                <div class="header-carousel owl-carousel bg-light py-5">
+            <div class="col-12" style="position: relative; overflow: hidden;">
+                <div class="header-carousel owl-carousel py-0">
                     @foreach($featuredProducts as $product)
-                        @php $minPrice = $product->getTypeInstance()->getMinimalPrice(); @endphp
-                        <div class="header-carousel-item p-4">
-                            <div class="row align-items-center">
+                        @php
+                            $minPrice = $product->getTypeInstance()->getMinimalPrice();
+                            $displayDesc = \Illuminate\Support\Str::limit(strip_tags($product->short_description), 100);
+                        @endphp
+                        <div class="header-carousel-item" style="width: 100vw; max-width: 100%;">
+                            <div class="row g-0 align-items-center">
                                 {{-- Text Section --}}
-                                <div class="col-md-6 carousel-content text-start ps-lg-5">
+                                <div class="col-md-6 carousel-content text-start p-5 ps-lg-5 order-2 order-md-1">
                                     <h5 class="text-muted fw-light mb-2">
                                         Save Up To <span class="text-primary fw-bold">{{ core()->currency($product->price - $minPrice) }}</span> On
                                     </h5>
-                                    <h2 class="fw-bold text-dark mb-3" style="font-size: 2rem;">
+                                    <h1 class="display-3 fw-bold text-dark mb-3">
                                         {{ $product->name }}
-                                    </h2>
-
-                                    {{-- Render Short Description with HTML support --}}
-                                    <div class="text-secondary mb-4 small-desc" style="font-size: 0.9rem; line-height: 1.5; max-width: 450px;">
-                                        {!! $product->short_description !!}
+                                    </h1>
+                                    <div class="text-secondary mb-4" style="font-size: 0.95rem;">
+                                        {!! $displayDesc !!}
                                     </div>
-
-                                    <a class="btn btn-primary rounded-pill py-2 px-5 fw-bold"
+                                    <a class="btn btn-primary rounded-pill py-3 px-5 fw-bold"
                                        href="{{ route('shop.home.product', $product->id) }}">
                                         Shop Now
                                     </a>
                                 </div>
+
                                 {{-- Image Section --}}
-                                <div class="col-md-6 carousel-img text-center position-relative">
-                                    <div class="bg-circle-overlay"></div>
+                                <div class="col-md-6 text-center p-0 position-relative order-1 order-md-2">
+                                    <div class="blend-overlay-right"></div>
                                     <img src="{{ $product->base_image_url }}"
-                                         class="img-fluid position-relative"
-                                         style="max-height: 350px; object-fit: contain; z-index: 2;"
+                                         class="img-fluid hero-img"
+                                         style="height: 500px; object-fit: contain; width: 100%; display: block;"
                                          alt="{{ $product->name }}">
                                 </div>
                             </div>
@@ -261,6 +262,48 @@
     /* Promo Banner Shadows */
     .promo-banner { transition: transform 0.3s ease; }
     .promo-banner:hover { transform: translateY(-5px); }
+
+    /* Container Fixes */
+    .container.carousel {
+        background-color: #F4F6F7 !important;
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* 1. Force the outer container to clip strictly */
+    .header-carousel.owl-carousel .owl-stage-outer {
+        overflow: hidden !important;
+        width: 100% !important;
+    }
+
+    /* 2. Hide all slides that are NOT currently active */
+    .header-carousel.owl-carousel .owl-item {
+        visibility: hidden;
+        transition: visibility 0s 0.3s; /* Smooth transition delay */
+    }
+
+    /* 3. Only show the slide with the .active class */
+    .header-carousel.owl-carousel .owl-item.active {
+        visibility: visible;
+        transition: visibility 0s 0s;
+    }
+
+    /* 4. Ensure the background color doesn't flicker during transitions */
+    .header-carousel.owl-carousel {
+        background-color: #F4F6F7 !important;
+    }
+
+    /* 5. Refined Blend Overlay */
+    .blend-overlay-right {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 20%;
+        height: 100%;
+        background: linear-gradient(to right, #F4F6F7 0%, rgba(244, 246, 247, 0) 100%);
+        z-index: 5;
+        pointer-events: none;
+    }
 </style>
 
 
