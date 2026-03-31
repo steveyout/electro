@@ -1,300 +1,932 @@
 @include('partials.header')
-<!-- Single Page Header start -->
+
+@php
+    /**
+     * Helper function for rendering product cards with responsive pricing.
+     */
+    $renderProductCard = function($item) {
+        if (!$item) return '';
+
+        $minP = $item->getTypeInstance()->getMinimalPrice();
+        $regP = $item->price;
+        $disc = ($regP > 0 && $regP > $minP) ? round((($regP - $minP) / $regP) * 100) : 0;
+        $productUrl = route('shop.home.product', $item->id);
+
+        return '
+        <div class="product-item rounded border bg-white h-100 shadow-sm">
+            <div class="position-relative overflow-hidden p-3">
+                ' . ($disc > 0 ? '<div class="discount-badge">' . $disc . '% <br> <span>off</span></div>' : '') . '
+                <img src="' . $item->base_image_url . '" class="img-fluid w-100" style="height:150px; object-fit:contain;" alt="' . $item->name . '">
+                <div class="product-action">
+                    <a class="btn btn-outline-primary btn-square mx-1" href="' . $productUrl . '"><i class="fa fa-eye"></i></a>
+                    <a class="btn btn-outline-primary btn-square mx-1 add-to-cart-btn" data-id="' . $item->id . '" data-qty="1" href="javascript:void(0);"><i class="fa fa-shopping-cart"></i></a>
+                </div>
+            </div>
+            <div class="text-center p-3 pt-0">
+                <a class="h6 d-block text-truncate mb-2 text-decoration-none text-dark" href="' . $productUrl . '">' . $item->name . '</a>
+                <div class="d-flex flex-column justify-content-center align-items-center mb-2">
+                    <span class="text-primary fw-bold mb-0">' . core()->currency($minP) . '</span>
+                    ' . ($disc > 0 ? '<span class="text-muted text-decoration-line-through small" style="font-size: 0.8rem;">' . core()->currency($regP) . '</span>' : '') . '
+                </div>
+                <button class="btn btn-primary btn-sm w-100 add-to-cart-btn py-2" data-id="' . $item->id . '" data-qty="1">Add to cart</button>
+            </div>
+        </div>';
+    };
+
+    $mainMinPrice = $product->getTypeInstance()->getMinimalPrice();
+    $mainRegPrice = $product->price;
+
+    // WhatsApp Formatting
+    $whatsappNumber = "254721966663";
+    $whatsappMessage = urlencode("Hello, I would like to order: " . $product->name . " (Price: " . core()->currency($mainMinPrice) . "). Link: " . route('shop.home.product', $product->id));
+
+    // Manually fetch reviews to avoid partial dependency
+    $reviewHelper = app('Webkul\Product\Helpers\Review');
+    $avgRating = $reviewHelper->getAverageRating($product);
+    $totalReviews = $reviewHelper->getTotalReviews($product);
+    $reviews = $reviewHelper->getReviews($product)->where('status', 'approved');
+@endphp
+
+<style>
+    #product-main-carousel { background: #fff; border-radius: 12px; border: 1px solid #eee; overflow: visible !important; }
+    .single-carousel .single-item { display: flex; align-items: center; justify-content: center; aspect-ratio: 1 / 1; }
+    .single-carousel .single-item img { width: 100%; height: 100%; object-fit: contain; padding: 30px; }
+    .price-display .final-price { color: #ff9800 !important; font-size: 2.5rem !important; font-weight: 800 !important; }
+
+    .short-desc-container { font-size: 0.95rem; line-height: 1.7; color: #4a4a4a; }
+    .short-desc-container ul { list-style: none; padding-left: 0; }
+    .short-desc-container ul li { position: relative; padding-left: 20px; margin-bottom: 8px; }
+    .short-desc-container ul li::before { content: "▪"; position: absolute; left: 0; color: #333; font-weight: bold; }
+
+    .discount-badge {
+        position: absolute; top: 10px; right: 10px; background: #ffb400; color: #000;
+        font-weight: bold; padding: 2px 6px; border-radius: 2px; line-height: 1.1;
+        text-align: center; z-index: 10; font-size: 11px;
+    }
+    .discount-badge span { font-size: 8px; text-transform: uppercase; display: block; }
+    .product-action {
+        position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(255, 255, 255, 0.6); opacity: 0; transition: 0.5s;
+    }
+    .product-item:hover .product-action { opacity: 1; }
+    .btn-square { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+
+    .btn-whatsapp { background-color: #25D366 !important; color: white !important; border: none !important; font-weight: 600; }
+    .btn-loading { opacity: 0.7; pointer-events: none; }
+</style>
+
 <div class="container-fluid page-header py-5">
-    <h1 class="text-center text-white display-6 wow fadeInUp" data-wow-delay="0.1s">
-        @isset($product)
-            {{$product['data']['name']}}
-        @endisset
-    </h1>
-    <ol class="breadcrumb justify-content-center mb-0 wow fadeInUp" data-wow-delay="0.3s">
-        <li class="breadcrumb-item"><a href="{{route('shop.home.index')}}">Home</a></li>
-        <li class="breadcrumb-item"><a href="{{route('shop.home.products')}}">Products</a></li>
-        @isset($product)
-        <li class="breadcrumb-item active text-white">{{$product['data']['name']}}</li>
-        @endisset
+    <h1 class="text-center text-white display-6">{{ $product->name }}</h1>
+    <ol class="breadcrumb justify-content-center mb-0">
+        <li class="breadcrumb-item"><a href="{{ route('shop.home.index') }}">Home</a></li>
+        <li class="breadcrumb-item active text-white">{{ $product->name }}</li>
     </ol>
 </div>
-<!-- Single Page Header End -->
 
-<!-- Single Products Start -->
-<div class="container-fluid shop py-5">
+<div class="container-fluid py-5">
     <div class="container py-5">
         <div class="row g-4">
-            <div class="col-lg-5 col-xl-3 wow fadeInUp" data-wow-delay="0.1s">
-                <div class="input-group w-100 mx-auto d-flex mb-4">
-                    <input type="search" class="form-control p-3" placeholder="keywords"
-                           aria-describedby="search-icon-1">
-                    <span id="search-icon-1" class="input-group-text p-3"><i class="fa fa-search"></i></span>
+            <div class="col-lg-3">
+                <div class="mb-4">
+                    <h4 class="fw-bold">Categories</h4>
+                    <ul class="list-unstyled mt-3">
+                        @foreach($categories as $category)
+                            <li class="mb-2">
+                                <a href="{{ url('categories/'.$category->id) }}" class="text-dark text-decoration-none">
+                                    <i class="fas fa-chevron-right text-primary small me-2"></i>{{ $category->name }}
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
                 </div>
-                <div class="product-categories mb-4">
-                    <h4>Products Categories</h4>
-                    <ul class="list-unstyled">
-                        @if(count($categories['data'])>0)
-                            @foreach($categories['data'] as $category)
-                                <li>
-                                    <div class="categories-item">
-                                        <a href="#" class="text-dark"><i class="fas fa-apple-alt text-secondary me-2"></i>
-                                            {{$category['name']}}</a>
+            </div>
+
+            <div class="col-lg-9">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div id="product-main-carousel" class="single-carousel owl-carousel owl-theme shadow-sm">
+                            @forelse($product->images as $image)
+                                <div class="single-item">
+                                    <img src="{{ $image->url }}" alt="{{ $product->name }}">
+                                </div>
+                            @empty
+                                <div class="single-item">
+                                    <img src="{{ asset('vendor/webkul/ui/assets/images/product-placeholder.webp') }}" alt="Placeholder">
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h2 class="fw-bold mb-1">{{ $product->name }}</h2>
+                        <p class="text-muted small mb-3">SKU: {{ $product->sku }}</p>
+
+                        <div class="price-display mb-3">
+                            <span class="final-price text-primary fw-bold" style="font-size: 2.2rem;">{{ core()->currency($mainMinPrice) }}</span>
+                            @if($mainRegPrice > $mainMinPrice)
+                                <span class="text-muted text-decoration-line-through ms-2">{{ core()->currency($mainRegPrice) }}</span>
+                            @endif
+                        </div>
+
+                        <div class="text-warning mb-3">
+                            @for($i=1; $i<=5; $i++)
+                                <i class="{{ $i <= $avgRating ? 'fas' : 'far' }} fa-star"></i>
+                            @endfor
+                            <span class="text-muted small ms-2">({{ $totalReviews }} reviews)</span>
+                        </div>
+
+                        <div class="short-desc-container mb-4">
+                            {!! $product->short_description !!}
+                        </div>
+
+                        <div class="whatsapp-order mb-4">
+                            <a href="https://wa.me/{{ $whatsappNumber }}?text={{ $whatsappMessage }}" target="_blank" class="btn btn-whatsapp rounded px-4 py-2 w-100 d-inline-flex align-items-center justify-content-center shadow-sm">
+                                <i class="fab fa-whatsapp me-2 fs-5"></i> Order via WhatsApp
+                            </a>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="input-group quantity" style="width: 120px;">
+                                <button class="btn btn-sm btn-minus rounded-circle bg-light border"><i class="fa fa-minus"></i></button>
+                                <input type="text" id="qty-input" class="form-control form-control-sm text-center border-0" value="1" readonly>
+                                <button class="btn btn-sm btn-plus rounded-circle bg-light border"><i class="fa fa-plus"></i></button>
+                            </div>
+                            <button class="btn btn-primary px-4 py-2 text-white add-to-cart-btn w-100" id="main-add-cart" data-id="{{ $product->id }}">
+                                <i class="fa fa-shopping-bag me-2"></i> Add to cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-5">
+                    <div class="col-12">
+                        <nav>
+                            <div class="nav nav-tabs mb-3" id="productTab" role="tablist">
+                                <button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#tab-desc" type="button">Description</button>
+                                <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#tab-reviews" type="button">Reviews ({{ $totalReviews }})</button>
+                            </div>
+                        </nav>
+                        <div class="tab-content border rounded p-4 bg-white shadow-sm mb-5">
+                            <div class="tab-pane fade show active" id="tab-desc">
+                                {!! $product->description !!}
+                            </div>
+                            <div class="tab-pane fade" id="tab-reviews">
+                                @forelse($reviews as $review)
+                                    <div class="d-flex mb-4 border-bottom pb-3">
+                                        <div class="flex-shrink-0">
+                                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                <i class="fa fa-user text-muted"></i>
+                                            </div>
+                                        </div>
+                                        <div class="ms-3">
+                                            <h6 class="mb-0">{{ $review->name }}</h6>
+                                            <div class="text-warning small mb-1">
+                                                @for($i=1; $i<=5; $i++) <i class="fa{{ $i <= $review->rating ? 's' : 'r' }} fa-star"></i> @endfor
+                                            </div>
+                                            <p class="mb-0 text-muted small">{{ $review->comment }}</p>
+                                        </div>
                                     </div>
-                                </li>
-                            @endforeach
+                                @empty
+                                    <p class="text-muted">No reviews yet for this product.</p>
+                                @endforelse
+                            </div>
+                        </div>
+
+                        @if($relatedProducts->count() > 0)
+                            <div class="related-products mt-5 pt-4">
+                                <h3 class="fw-bold mb-4">Related Products</h3>
+                                <div class="related-carousel owl-carousel">
+                                    @foreach($relatedProducts as $related)
+                                        <div class="h-100 px-1">
+                                            {!! $renderProductCard($related) !!}
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
                         @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@include('partials.footer')
+
+@include('partials.header')
+
+@php
+    /**
+     * Helper function for rendering product cards with responsive pricing.
+     */
+    $renderProductCard = function($item) {
+        if (!$item) return '';
+
+        $minP = $item->getTypeInstance()->getMinimalPrice();
+        $regP = $item->price;
+        $disc = ($regP > 0 && $regP > $minP) ? round((($regP - $minP) / $regP) * 100) : 0;
+        $productUrl = route('shop.home.product', $item->id);
+
+        return '
+        <div class="product-item rounded border bg-white h-100 shadow-sm">
+            <div class="position-relative overflow-hidden p-3">
+                ' . ($disc > 0 ? '<div class="discount-badge">' . $disc . '% <br> <span>off</span></div>' : '') . '
+                <img src="' . $item->base_image_url . '" class="img-fluid w-100" style="height:150px; object-fit:contain;" alt="' . $item->name . '">
+                <div class="product-action">
+                    <a class="btn btn-outline-primary btn-square mx-1" href="' . $productUrl . '"><i class="fa fa-eye"></i></a>
+                    <a class="btn btn-outline-primary btn-square mx-1 add-to-cart-btn" data-id="' . $item->id . '" data-qty="1" href="javascript:void(0);"><i class="fa fa-shopping-cart"></i></a>
+                </div>
+            </div>
+            <div class="text-center p-3 pt-0">
+                <a class="h6 d-block text-truncate mb-2 text-decoration-none text-dark" href="' . $productUrl . '">' . $item->name . '</a>
+                <div class="d-flex flex-column justify-content-center align-items-center mb-2">
+                    <span class="text-primary fw-bold mb-0">' . core()->currency($minP) . '</span>
+                    ' . ($disc > 0 ? '<span class="text-muted text-decoration-line-through small" style="font-size: 0.8rem;">' . core()->currency($regP) . '</span>' : '') . '
+                </div>
+                <button class="btn btn-primary btn-sm w-100 add-to-cart-btn py-2" data-id="' . $item->id . '" data-qty="1">Add to cart</button>
+            </div>
+        </div>';
+    };
+
+    $mainMinPrice = $product->getTypeInstance()->getMinimalPrice();
+    $mainRegPrice = $product->price;
+
+    // WhatsApp Formatting
+    $whatsappNumber = "254721966663";
+    $whatsappMessage = urlencode("Hello, I would like to order: " . $product->name . " (Price: " . core()->currency($mainMinPrice) . "). Link: " . route('shop.home.product', $product->id));
+
+    // Manual review fetch
+    $reviewHelper = app('Webkul\Product\Helpers\Review');
+    $avgRating = $reviewHelper->getAverageRating($product);
+    $totalReviews = $reviewHelper->getTotalReviews($product);
+    $reviews = $reviewHelper->getReviews($product)->where('status', 'approved');
+@endphp
+
+<style>
+    #product-main-carousel { background: #fff; border-radius: 12px; border: 1px solid #eee; overflow: visible !important; }
+    .single-carousel .single-item { display: flex; align-items: center; justify-content: center; aspect-ratio: 1 / 1; }
+    .single-carousel .single-item img { width: 100%; height: 100%; object-fit: contain; padding: 30px; }
+    .price-display .final-price { color: #ff9800 !important; font-size: 2.5rem !important; font-weight: 800 !important; }
+
+    .short-desc-container { font-size: 0.95rem; line-height: 1.7; color: #4a4a4a; }
+    .short-desc-container ul { list-style: none; padding-left: 0; }
+    .short-desc-container ul li { position: relative; padding-left: 20px; margin-bottom: 8px; }
+    .short-desc-container ul li::before { content: "▪"; position: absolute; left: 0; color: #333; font-weight: bold; }
+
+    .discount-badge {
+        position: absolute; top: 10px; right: 10px; background: #ffb400; color: #000;
+        font-weight: bold; padding: 2px 6px; border-radius: 2px; line-height: 1.1;
+        text-align: center; z-index: 10; font-size: 11px;
+    }
+    .discount-badge span { font-size: 8px; text-transform: uppercase; display: block; }
+    .product-action {
+        position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(255, 255, 255, 0.6); opacity: 0; transition: 0.5s;
+    }
+    .product-item:hover .product-action { opacity: 1; }
+    .btn-square { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+
+    .btn-whatsapp { background-color: #25D366 !important; color: white !important; font-weight: 600; }
+    .btn-loading { opacity: 0.7; pointer-events: none; }
+
+    /* Related Products Full Width styling */
+    .related-products-wrapper { background: #f8f9fa; border-top: 1px solid #eee; }
+</style>
+
+<div class="container-fluid page-header py-5">
+    <h1 class="text-center text-white display-6">{{ $product->name }}</h1>
+    <ol class="breadcrumb justify-content-center mb-0">
+        <li class="breadcrumb-item"><a href="{{ route('shop.home.index') }}">Home</a></li>
+        <li class="breadcrumb-item active text-white">{{ $product->name }}</li>
+    </ol>
+</div>
+
+<div class="container-fluid py-5">
+    <div class="container py-5">
+        <div class="row g-4">
+            <div class="col-lg-3">
+                <div class="mb-4">
+                    <h4 class="fw-bold">Categories</h4>
+                    <ul class="list-unstyled mt-3">
+                        @foreach($categories as $category)
+                            <li class="mb-2">
+                                <a href="{{ url('categories/'.$category->id) }}" class="text-dark text-decoration-none">
+                                    <i class="fas fa-chevron-right text-primary small me-2"></i>{{ $category->name }}
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-lg-9">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div id="product-main-carousel" class="single-carousel owl-carousel owl-theme shadow-sm">
+                            @forelse($product->images as $image)
+                                <div class="single-item">
+                                    <img src="{{ $image->url }}" alt="{{ $product->name }}">
+                                </div>
+                            @empty
+                                <div class="single-item">
+                                    <img src="{{ asset('vendor/webkul/ui/assets/images/product-placeholder.webp') }}" alt="Placeholder">
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h2 class="fw-bold mb-1">{{ $product->name }}</h2>
+                        <p class="text-muted small mb-3">SKU: {{ $product->sku }}</p>
+
+                        <div class="price-display mb-3">
+                            <span class="final-price text-primary fw-bold" style="font-size: 2.2rem;">{{ core()->currency($mainMinPrice) }}</span>
+                            @if($mainRegPrice > $mainMinPrice)
+                                <span class="text-muted text-decoration-line-through ms-2">{{ core()->currency($mainRegPrice) }}</span>
+                            @endif
+                        </div>
+
+                        <div class="text-warning mb-3">
+                            @for($i=1; $i<=5; $i++)
+                                <i class="{{ $i <= $avgRating ? 'fas' : 'far' }} fa-star"></i>
+                            @endfor
+                            <span class="text-muted small ms-2">({{ $totalReviews }} reviews)</span>
+                        </div>
+
+                        <div class="short-desc-container mb-4">
+                            {!! $product->short_description !!}
+                        </div>
+
+                        <div class="whatsapp-order mb-4">
+                            <a href="https://wa.me/{{ $whatsappNumber }}?text={{ $whatsappMessage }}" target="_blank" class="btn btn-whatsapp rounded px-4 py-2 w-100 d-inline-flex align-items-center justify-content-center shadow-sm">
+                                <i class="fab fa-whatsapp me-2 fs-5"></i> Order via WhatsApp
+                            </a>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="input-group quantity" style="width: 120px;">
+                                <button class="btn btn-sm btn-minus rounded-circle bg-light border"><i class="fa fa-minus"></i></button>
+                                <input type="text" id="qty-input" class="form-control form-control-sm text-center border-0" value="1" readonly>
+                                <button class="btn btn-sm btn-plus rounded-circle bg-light border"><i class="fa fa-plus"></i></button>
+                            </div>
+                            <button class="btn btn-primary px-4 py-2 text-white add-to-cart-btn w-100" id="main-add-cart" data-id="{{ $product->id }}">
+                                <i class="fa fa-shopping-bag me-2"></i> Add to cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-5">
+                    <div class="col-12">
+                        <nav>
+                            <div class="nav nav-tabs mb-3" id="productTab" role="tablist">
+                                <button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#tab-desc" type="button">Description</button>
+                                <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#tab-reviews" type="button">Reviews ({{ $totalReviews }})</button>
+                            </div>
+                        </nav>
+                        <div class="tab-content border rounded p-4 bg-white shadow-sm mb-5">
+                            <div class="tab-pane fade show active" id="tab-desc">
+                                {!! $product->description !!}
+                            </div>
+                            <div class="tab-pane fade" id="tab-reviews">
+                                @forelse($reviews as $review)
+                                    <div class="d-flex mb-4 border-bottom pb-3">
+                                        <div class="flex-shrink-0">
+                                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                <i class="fa fa-user text-muted"></i>
+                                            </div>
+                                        </div>
+                                        <div class="ms-3">
+                                            <h6 class="mb-0">{{ $review->name }}</h6>
+                                            <div class="text-warning small mb-1">
+                                                @for($i=1; $i<=5; $i++) <i class="fa{{ $i <= $review->rating ? 's' : 'r' }} fa-star"></i> @endfor
+                                            </div>
+                                            <p class="mb-0 text-muted small">{{ $review->comment }}</p>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <p class="text-muted italic">No reviews yet for this product.</p>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if($relatedProducts->count() > 0)
+    <div class="container-fluid py-5 related-products-wrapper">
+        <div class="container">
+            <h3 class="fw-bold mb-4">Related Products</h3>
+            <div class="related-carousel owl-carousel">
+                @foreach($relatedProducts as $related)
+                    <div class="h-100 px-1">
+                        {!! $renderProductCard($related) !!}
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+@endif
+
+@include('partials.footer')
+
+@include('partials.header')
+
+@php
+    /**
+     * Helper function for rendering product cards with responsive pricing.
+     */
+    $renderProductCard = function($item) {
+        if (!$item) return '';
+
+        $minP = $item->getTypeInstance()->getMinimalPrice();
+        $regP = $item->price;
+        $disc = ($regP > 0 && $regP > $minP) ? round((($regP - $minP) / $regP) * 100) : 0;
+        $productUrl = route('shop.home.product', $item->id);
+
+        return '
+        <div class="product-item rounded border bg-white h-100 shadow-sm">
+            <div class="position-relative overflow-hidden p-3">
+                ' . ($disc > 0 ? '<div class="discount-badge">' . $disc . '% <br> <span>off</span></div>' : '') . '
+                <img src="' . $item->base_image_url . '" class="img-fluid w-100" style="height:150px; object-fit:contain;" alt="' . $item->name . '">
+                <div class="product-action">
+                    <a class="btn btn-outline-primary btn-square mx-1" href="' . $productUrl . '"><i class="fa fa-eye"></i></a>
+                    <a class="btn btn-outline-primary btn-square mx-1 add-to-cart-btn" data-id="' . $item->id . '" data-qty="1" href="javascript:void(0);"><i class="fa fa-shopping-cart"></i></a>
+                </div>
+            </div>
+            <div class="text-center p-3 pt-0">
+                <a class="h6 d-block text-truncate mb-2 text-decoration-none text-dark" href="' . $productUrl . '">' . $item->name . '</a>
+                <div class="d-flex flex-column justify-content-center align-items-center mb-2">
+                    <span class="text-primary fw-bold mb-0">' . core()->currency($minP) . '</span>
+                    ' . ($disc > 0 ? '<span class="text-muted text-decoration-line-through small" style="font-size: 0.8rem;">' . core()->currency($regP) . '</span>' : '') . '
+                </div>
+                <button class="btn btn-primary btn-sm w-100 add-to-cart-btn py-2" data-id="' . $item->id . '" data-qty="1">Add to cart</button>
+            </div>
+        </div>';
+    };
+
+    $mainMinPrice = $product->getTypeInstance()->getMinimalPrice();
+    $mainRegPrice = $product->price;
+
+    // WhatsApp Formatting
+    $whatsappNumber = "254721966663";
+    $whatsappMessage = urlencode("Hello, I would like to order: " . $product->name . " (Price: " . core()->currency($mainMinPrice) . "). Link: " . route('shop.home.product', $product->id));
+
+    // Manually fetch reviews to avoid partial dependency
+    $reviewHelper = app('Webkul\Product\Helpers\Review');
+    $avgRating = $reviewHelper->getAverageRating($product);
+    $totalReviews = $reviewHelper->getTotalReviews($product);
+    $reviews = $reviewHelper->getReviews($product)->where('status', 'approved');
+@endphp
+
+<style>
+    #product-main-carousel { background: #fff; border-radius: 12px; border: 1px solid #eee; overflow: visible !important; }
+    .single-carousel .single-item { display: flex; align-items: center; justify-content: center; aspect-ratio: 1 / 1; }
+    .single-carousel .single-item img { width: 100%; height: 100%; object-fit: contain; padding: 30px; }
+    .price-display .final-price { color: #ff9800 !important; font-size: 2.5rem !important; font-weight: 800 !important; }
+
+    .short-desc-container { font-size: 0.95rem; line-height: 1.7; color: #4a4a4a; }
+    .short-desc-container ul { list-style: none; padding-left: 0; }
+    .short-desc-container ul li { position: relative; padding-left: 20px; margin-bottom: 8px; }
+    .short-desc-container ul li::before { content: "▪"; position: absolute; left: 0; color: #333; font-weight: bold; }
+
+    .discount-badge {
+        position: absolute; top: 10px; right: 10px; background: #ffb400; color: #000;
+        font-weight: bold; padding: 2px 6px; border-radius: 2px; line-height: 1.1;
+        text-align: center; z-index: 10; font-size: 11px;
+    }
+    .discount-badge span { font-size: 8px; text-transform: uppercase; display: block; }
+    .product-action {
+        position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(255, 255, 255, 0.6); opacity: 0; transition: 0.5s;
+    }
+    .product-item:hover .product-action { opacity: 1; }
+    .btn-square { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+
+    .btn-whatsapp { background-color: #25D366 !important; color: white !important; border: none !important; font-weight: 600; }
+    .btn-loading { opacity: 0.7; pointer-events: none; }
+</style>
+
+<div class="container-fluid page-header py-5">
+    <h1 class="text-center text-white display-6">{{ $product->name }}</h1>
+    <ol class="breadcrumb justify-content-center mb-0">
+        <li class="breadcrumb-item"><a href="{{ route('shop.home.index') }}">Home</a></li>
+        <li class="breadcrumb-item active text-white">{{ $product->name }}</li>
+    </ol>
+</div>
+
+<div class="container-fluid py-5">
+    <div class="container py-5">
+        <div class="row g-4">
+            <div class="col-lg-3">
+                <div class="mb-4">
+                    <h4 class="fw-bold">Categories</h4>
+                    <ul class="list-unstyled mt-3">
+                        @foreach($categories as $category)
+                            <li class="mb-2">
+                                <a href="{{ url('categories/'.$category->id) }}" class="text-dark text-decoration-none">
+                                    <i class="fas fa-chevron-right text-primary small me-2"></i>{{ $category->name }}
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-lg-9">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div id="product-main-carousel" class="single-carousel owl-carousel owl-theme shadow-sm">
+                            @forelse($product->images as $image)
+                                <div class="single-item">
+                                    <img src="{{ $image->url }}" alt="{{ $product->name }}">
+                                </div>
+                            @empty
+                                <div class="single-item">
+                                    <img src="{{ asset('vendor/webkul/ui/assets/images/product-placeholder.webp') }}" alt="Placeholder">
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h2 class="fw-bold mb-1">{{ $product->name }}</h2>
+                        <p class="text-muted small mb-3">SKU: {{ $product->sku }}</p>
+
+                        <div class="price-display mb-3">
+                            <span class="final-price text-primary fw-bold" style="font-size: 2.2rem;">{{ core()->currency($mainMinPrice) }}</span>
+                            @if($mainRegPrice > $mainMinPrice)
+                                <span class="text-muted text-decoration-line-through ms-2">{{ core()->currency($mainRegPrice) }}</span>
+                            @endif
+                        </div>
+
+                        <div class="text-warning mb-3">
+                            @for($i=1; $i<=5; $i++)
+                                <i class="{{ $i <= $avgRating ? 'fas' : 'far' }} fa-star"></i>
+                            @endfor
+                            <span class="text-muted small ms-2">({{ $totalReviews }} reviews)</span>
+                        </div>
+
+                        <div class="short-desc-container mb-4">
+                            {!! $product->short_description !!}
+                        </div>
+
+                        <div class="whatsapp-order mb-4">
+                            <a href="https://wa.me/{{ $whatsappNumber }}?text={{ $whatsappMessage }}" target="_blank" class="btn btn-whatsapp rounded px-4 py-2 w-100 d-inline-flex align-items-center justify-content-center shadow-sm">
+                                <i class="fab fa-whatsapp me-2 fs-5"></i> Order via WhatsApp
+                            </a>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="input-group quantity" style="width: 120px;">
+                                <button class="btn btn-sm btn-minus rounded-circle bg-light border"><i class="fa fa-minus"></i></button>
+                                <input type="text" id="qty-input" class="form-control form-control-sm text-center border-0" value="1" readonly>
+                                <button class="btn btn-sm btn-plus rounded-circle bg-light border"><i class="fa fa-plus"></i></button>
+                            </div>
+                            <button class="btn btn-primary px-4 py-2 text-white add-to-cart-btn w-100" id="main-add-cart" data-id="{{ $product->id }}">
+                                <i class="fa fa-shopping-bag me-2"></i> Add to cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-5">
+                    <div class="col-12">
+                        <nav>
+                            <div class="nav nav-tabs mb-3" id="productTab" role="tablist">
+                                <button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#tab-desc" type="button">Description</button>
+                                <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#tab-reviews" type="button">Reviews ({{ $totalReviews }})</button>
+                            </div>
+                        </nav>
+                        <div class="tab-content border rounded p-4 bg-white shadow-sm mb-5">
+                            <div class="tab-pane fade show active" id="tab-desc">
+                                {!! $product->description !!}
+                            </div>
+                            <div class="tab-pane fade" id="tab-reviews">
+                                @forelse($reviews as $review)
+                                    <div class="d-flex mb-4 border-bottom pb-3">
+                                        <div class="flex-shrink-0">
+                                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                <i class="fa fa-user text-muted"></i>
+                                            </div>
+                                        </div>
+                                        <div class="ms-3">
+                                            <h6 class="mb-0">{{ $review->name }}</h6>
+                                            <div class="text-warning small mb-1">
+                                                @for($i=1; $i<=5; $i++) <i class="fa{{ $i <= $review->rating ? 's' : 'r' }} fa-star"></i> @endfor
+                                            </div>
+                                            <p class="mb-0 text-muted small">{{ $review->comment }}</p>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <p class="text-muted">No reviews yet for this product.</p>
+                                @endforelse
+                            </div>
+                        </div>
+
+                        @if($relatedProducts->count() > 0)
+                            <div class="related-products mt-5 pt-4">
+                                <h3 class="fw-bold mb-4">Related Products</h3>
+                                <div class="related-carousel owl-carousel">
+                                    @foreach($relatedProducts as $related)
+                                        <div class="h-100 px-1">
+                                            {!! $renderProductCard($related) !!}
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@include('partials.footer')
+
+@include('partials.header')
+
+@php
+    /**
+     * Helper function for rendering product cards with responsive pricing.
+     */
+    $renderProductCard = function($item) {
+        if (!$item) return '';
+
+        $minP = $item->getTypeInstance()->getMinimalPrice();
+        $regP = $item->price;
+        $disc = ($regP > 0 && $regP > $minP) ? round((($regP - $minP) / $regP) * 100) : 0;
+        $productUrl = route('shop.home.product', $item->id);
+
+        return '
+        <div class="product-item rounded border bg-white h-100 shadow-sm">
+            <div class="position-relative overflow-hidden p-3">
+                ' . ($disc > 0 ? '<div class="discount-badge">' . $disc . '% <br> <span>off</span></div>' : '') . '
+                <img src="' . $item->base_image_url . '" class="img-fluid w-100" style="height:150px; object-fit:contain;" alt="' . $item->name . '">
+                <div class="product-action">
+                    <a class="btn btn-outline-primary btn-square mx-1" href="' . $productUrl . '"><i class="fa fa-eye"></i></a>
+                    <a class="btn btn-outline-primary btn-square mx-1 add-cart" id="' . $item->id . '" href="#"><i class="fa fa-shopping-cart"></i></a>
+                </div>
+            </div>
+            <div class="text-center p-3 pt-0">
+                <a class="h6 d-block text-truncate mb-2 text-decoration-none text-dark" href="' . $productUrl . '">' . $item->name . '</a>
+                <div class="d-flex flex-column justify-content-center align-items-center mb-2">
+                    <span class="text-primary fw-bold mb-0">' . core()->currency($minP) . '</span>
+                    ' . ($disc > 0 ? '<span class="text-muted text-decoration-line-through small" style="font-size: 0.8rem;">' . core()->currency($regP) . '</span>' : '') . '
+                </div>
+                <button id="' . $item->id . '" class="btn btn-primary btn-sm w-100 add-cart py-2">Add to cart</button>
+            </div>
+        </div>';
+    };
+
+    $mainMinPrice = $product->getTypeInstance()->getMinimalPrice();
+    $mainRegPrice = $product->price;
+
+    // WhatsApp Formatting
+    $whatsappNumber = "254721966663";
+    $whatsappMessage = urlencode("Hello, I would like to order: " . $product->name . " (Price: " . core()->currency($mainMinPrice) . "). Link: " . route('shop.home.product', $product->id));
+@endphp
+
+<style>
+    #product-main-carousel {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #eee;
+        overflow: visible !important;
+    }
+    .single-carousel .single-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 1 / 1;
+    }
+    .single-carousel .single-item img {
+        width: 100%; height: 100%;
+        object-fit: contain; padding: 30px;
+    }
+    .price-display .final-price {
+        color: #ff9800 !important;
+        font-size: 2.5rem !important;
+        font-weight: 800 !important;
+    }
+    .price-display .regular-price {
+        text-decoration: line-through !important;
+        color: #adb5bd !important;
+        font-size: 1.2rem !important;
+        margin-left: 10px;
+    }
+
+    /* Index Card Overrides */
+    .discount-badge {
+        position: absolute; top: 10px; right: 10px; background: #ffb400; color: #000;
+        font-weight: bold; padding: 2px 6px; border-radius: 2px; line-height: 1.1;
+        text-align: center; z-index: 10; font-size: 11px;
+    }
+    .discount-badge span { font-size: 8px; text-transform: uppercase; display: block; }
+    .product-action {
+        position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(255, 255, 255, 0.6); opacity: 0; transition: 0.5s;
+    }
+    .product-item:hover .product-action { opacity: 1; }
+    .btn-square { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+
+    /* Carousel Arrows */
+    .single-carousel.owl-carousel .owl-nav .owl-prev,
+    .single-carousel.owl-carousel .owl-nav .owl-next {
+        position: absolute !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        background: #fff !important;
+        color: #ff9800 !important;
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 50% !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    .single-carousel.owl-carousel .owl-nav .owl-prev { left: -20px !important; }
+    .single-carousel.owl-carousel .owl-nav .owl-next { right: -20px !important; }
+
+    /* WhatsApp Button Styling */
+    .btn-whatsapp {
+        background-color: #25D366 !important;
+        color: white !important;
+        border: none !important;
+        transition: all 0.3s ease;
+    }
+    .btn-whatsapp:hover {
+        background-color: #128C7E !important;
+        transform: translateY(-2px);
+    }
+</style>
+
+<div class="container-fluid page-header py-5">
+    <h1 class="text-center text-white display-6">{{ $product->name }}</h1>
+    <ol class="breadcrumb justify-content-center mb-0">
+        <li class="breadcrumb-item"><a href="{{ route('shop.home.index') }}">Home</a></li>
+        <li class="breadcrumb-item active text-white">{{ $product->name }}</li>
+    </ol>
+</div>
+
+<div class="container-fluid py-5">
+    <div class="container py-5">
+        <div class="row g-4">
+            <div class="col-lg-3">
+                <div class="mb-4">
+                    <h4>Categories</h4>
+                    <ul class="list-unstyled mt-3">
+                        @foreach($categories as $category)
+                            <li class="mb-2">
+                                <a href="{{ url('categories/'.$category->id) }}" class="text-dark text-decoration-none">
+                                    <i class="fas fa-chevron-right text-primary small me-2"></i>{{ $category->name }}
+                                </a>
+                            </li>
+                        @endforeach
                     </ul>
                 </div>
 
-                <div class="featured-product mb-4">
-                    <h4 class="mb-3">Featured products</h4>
-
-                    @if(count($products['data'])>0)
-                        @foreach($products['data'] as $featuredProduct)
-                    <div class="featured-product-item">
-                        <div class="rounded me-4" style="width: 100px; height: 100px;">
-                            <img src="{{$featuredProduct['images'][0]['original_image_url']}}" class="img-fluid rounded" alt="Image">
-                        </div>
-                        <div>
-                            <h6 class="mb-2">SmartPhone</h6>
-                            <div class="d-flex mb-2">
-                                <input  data-show-clear="false" type="text" class="rating" data-size="sm" value="{{$featuredProduct['ratings']['average']}}" disabled>
+                <div class="featured-section mt-5">
+                    <h4 class="mb-3">Featured Products</h4>
+                    <div class="row g-3">
+                        @foreach($featuredProducts->take(3) as $featured)
+                            <div class="col-12">
+                                {!! $renderProductCard($featured) !!}
                             </div>
-                            <div class="d-flex mb-2">
-                                @if($featuredProduct['on_sale'])
-                                    <h5 class="fw-bold me-2">{{$featuredProduct['prices']['regular']['formatted_price']}}</h5>
-                                @endif
-                                    <h5 class="text-danger text-decoration-line-through">{{$featuredProduct['prices']['final']['formatted_price']}}</h5>
-                            </div>
-                        </div>
-                    </div>
                         @endforeach
-                    @endif
-
-
-                <!----promo start
-                <a href="#">
-                    <div class="position-relative">
-                        <img src="img/product-banner-2.jpg" class="img-fluid w-100 rounded" alt="Image">
-                        <div class="text-center position-absolute d-flex flex-column align-items-center justify-content-center rounded p-4"
-                             style="width: 100%; height: 100%; top: 0; right: 0; background: rgba(242, 139, 0, 0.3);">
-                            <h5 class="display-6 text-primary">SALE</h5>
-                            <h4 class="text-secondary">Get UP To 50% Off</h4>
-                            <a href="#" class="btn btn-primary rounded-pill px-4">Shop Now</a>
-                        </div>
                     </div>
-                </a>
-                --promo end -->
                 </div>
             </div>
-            <div class="col-lg-7 col-xl-9 wow fadeInUp" data-wow-delay="0.1s">
-                <div class="row g-4 single-product">
-                    <div class="col-xl-6">
-                        <div class="single-carousel owl-carousel">
-                            @if(count($product['data']['images'])!==0)
-                                @foreach($product['data']['images'] as $image)
-                                    <div class="single-item"
-                                         data-dot="<img class='img-fluid' src='{{$image['url']}}' alt=''>">
-                                        <div class="single-inner bg-light rounded">
-                                            <img src="{{$image['url']}}" class="img-fluid rounded" alt="Image">
-                                        </div>
-                                    </div>
-                                @endforeach
+
+            <div class="col-lg-9">
+                <div class="row g-4 mb-5">
+                    <div class="col-md-6">
+                        <div id="product-main-carousel" class="single-carousel owl-carousel owl-theme shadow-sm">
+                            @forelse($product->images as $image)
+                                <div class="single-item">
+                                    <img src="{{ $image->url }}" alt="{{ $product->name }}">
+                                </div>
+                            @empty
+                                <div class="single-item">
+                                    <img src="{{ asset('vendor/webkul/ui/assets/images/product-placeholder.webp') }}" alt="Placeholder">
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h2 class="fw-bold mb-1">{{ $product->name }}</h2>
+                        <p class="text-muted small mb-3">SKU: {{ $product->sku }}</p>
+
+                        <div class="price-display mb-4">
+                            <span class="final-price">{{ core()->currency($mainMinPrice) }}</span>
+                            @if($mainRegPrice > $mainMinPrice)
+                                <span class="regular-price">{{ core()->currency($mainRegPrice) }}</span>
                             @endif
                         </div>
+
+                        <div class="mb-4 text-muted" style="line-height: 1.6;">
+                            {!! $product->short_description !!}
+                        </div>
+
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="input-group quantity me-3" style="width: 120px;">
+                                <button class="btn btn-sm btn-minus rounded-circle bg-light border"><i class="fa fa-minus"></i></button>
+                                <input type="text" class="form-control form-control-sm text-center border-0" value="1">
+                                <button class="btn btn-sm btn-plus rounded-circle bg-light border"><i class="fa fa-plus"></i></button>
+                            </div>
+                            <button class="btn btn-primary rounded-pill px-4 py-2 text-white add-cart" id="{{ $product->id }}">
+                                <i class="fa fa-shopping-bag me-2"></i> Add to cart
+                            </button>
+                        </div>
+
+                        <div class="whatsapp-order">
+                            <a href="https://wa.me/{{ $whatsappNumber }}?text={{ $whatsappMessage }}"
+                               target="_blank"
+                               class="btn btn-whatsapp rounded-pill px-4 py-2 w-100 w-md-auto d-inline-flex align-items-center justify-content-center">
+                                <i class="fab fa-whatsapp me-2 fs-5"></i> Order via WhatsApp
+                            </a>
+                        </div>
                     </div>
-                    <div class="col-xl-6">
-                        <h4 class="fw-bold mb-3">{{$product['data']['name']}}</h4>
-                        <p class="mb-3">Category: Electronics</p>
-                        <h5 class="fw-bold mb-3">{{$product['data']['formatted_price']}}</h5>
-                        <div class="d-flex mb-4">
-                            <input data-show-clear="false" type="text" class="rating" data-size="sm" value="{{$product['data']['reviews']['average_rating']}}" disabled>
+                </div>
+
+                <div class="col-12">
+                    <nav>
+                        <div class="nav nav-tabs mb-3">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-desc">Description</button>
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-reviews">Reviews ({{ $reviews->count() }})</button>
                         </div>
-                        <div class="mb-3">
-                            <div class="btn btn-primary d-inline-block rounded text-white py-1 px-4 me-2"><i
-                                    class="fab fa-facebook-f me-1"></i> Share</div>
-                            <div class="btn btn-secondary d-inline-block rounded text-white py-1 px-4 ms-2"><i
-                                    class="fab fa-twitter ms-1"></i> Share</div>
+                    </nav>
+                    <div class="tab-content border rounded p-4 bg-white mb-5">
+                        <div class="tab-pane fade show active" id="tab-desc">
+                            {!! $product->description !!}
                         </div>
-                        <div class="d-flex flex-column mb-3">
-                            <small>Product SKU: {{$product['data']['sku']}}</small>
-                            <small>
-                                Available:
-                                @if($product['data']['in_stock'])
-                                    <strong class="text-success">
-                                        Yes
-                                    </strong>
-                                @else
-                                    <strong class="text-success">
-                                        No
-                                    </strong>
-                                @endif
-                            </small>
+                        <div class="tab-pane fade" id="tab-reviews">
+                            @forelse($reviews as $review)
+                                <div class="d-flex mb-4 border-bottom pb-3">
+                                    <img src="{{ asset('img/avatar.jpg') }}" class="rounded-circle p-1 border me-3" style="width: 50px; height: 50px;">
+                                    <div>
+                                        <h6 class="mb-0">{{ $review->name }}</h6>
+                                        <div class="text-warning small mb-1">
+                                            @for($i=1; $i<=5; $i++) <i class="fa{{ $i <= $review->rating ? 's' : 'r' }} fa-star"></i> @endfor
+                                        </div>
+                                        <p class="mb-0 text-muted small">{{ $review->comment }}</p>
+                                    </div>
+                                </div>
+                            @empty
+                                <p class="text-muted">No reviews yet for this product.</p>
+                            @endforelse
                         </div>
-                        <p class="mb-4">{!!$product['data']['short_description']!!}</p>
-                        <div class="input-group quantity mb-5" style="width: 100px;">
-                            <div class="input-group-btn">
-                                <button class="btn btn-sm btn-minus rounded-circle bg-light border">
-                                    <i class="fa fa-minus"></i>
-                                </button>
-                            </div>
-                            <input type="text" class="form-control form-control-sm text-center border-0" value="1">
-                            <div class="input-group-btn">
-                                <button class="btn btn-sm btn-plus rounded-circle bg-light border">
-                                    <i class="fa fa-plus"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <a href="#"
-                           class="btn btn-primary border border-secondary rounded-pill px-4 py-2 mb-4 text-primary"><i
-                                class="fa fa-shopping-bag me-2 text-white"></i> Add to cart</a>
                     </div>
-                    <div class="col-lg-12">
-                        <nav>
-                            <div class="nav nav-tabs mb-3">
-                                <button class="nav-link active border-white border-bottom-0" type="button"
-                                        role="tab" id="nav-about-tab" data-bs-toggle="tab" data-bs-target="#nav-about"
-                                        aria-controls="nav-about" aria-selected="true">Description</button>
-                                <button class="nav-link border-white border-bottom-0" type="button" role="tab"
-                                        id="nav-mission-tab" data-bs-toggle="tab" data-bs-target="#nav-mission"
-                                        aria-controls="nav-mission" aria-selected="false">Reviews</button>
-                            </div>
-                        </nav>
-                        <div class="tab-content mb-5">
-                            <div class="tab-pane active" id="nav-about" role="tabpanel"
-                                 aria-labelledby="nav-about-tab">
-                                {!!$product['data']['description']!!}
+                </div>
 
-
-</div>
-
-                            <!--reviews start here -->
-<div class="tab-pane" id="nav-mission" role="tabpanel"
- aria-labelledby="nav-mission-tab">
-
-    <!-- start single review -->
-    @if(count($reviews['data'])>0)
-        @foreach($reviews['data'] as $review)
-<div class="d-flex">
-    <img src="img/avatar.jpg" class="img-fluid rounded-circle p-3"
-         style="width: 100px; height: 100px;" alt="">
-    <div class="">
-        <p class="mb-2" style="font-size: 14px;">{{$review['created_at']}}</p>
-        <div class="d-flex justify-content-between">
-            <h5>{{$review['name']}}</h5>
-            <div class="d-flex mb-3">
-                <i class="fa fa-star text-secondary"></i>
-                {{$review['reviews']['average_rating']}}
+                @if($relatedProducts->count() > 0)
+                    <div class="related-products mt-5">
+                        <h4 class="fw-bold mb-4">Related Products</h4>
+                        <div class="related-carousel owl-carousel">
+                            @foreach($relatedProducts as $related)
+                                <div class="h-100 px-1">
+                                    {!! $renderProductCard($related) !!}
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
-        <p>{!! $review['comment'] !!} </p>
     </div>
 </div>
-        @endforeach
-    @endif
-    <!--end single review-->
 
-</div>
-</div>
-</div>
-<form action="#">
-<h4 class="mb-5 fw-bold">Leave a Reply</h4>
-<div class="row g-4">
-<div class="col-lg-6">
-<div class="border-bottom rounded">
-    <input type="text" class="form-control border-0 me-4" placeholder="Yur Name *">
-</div>
-</div>
-<div class="col-lg-6">
-<div class="border-bottom rounded">
-    <input type="email" class="form-control border-0" placeholder="Your Email *">
-</div>
-</div>
-<div class="col-lg-12">
-<div class="border-bottom rounded my-4">
-        <textarea name="" id="" class="form-control border-0" cols="30" rows="8"
-                  placeholder="Your Review *" spellcheck="false"></textarea>
-</div>
-</div>
-<div class="col-lg-12">
-<div class="d-flex justify-content-between py-3 mb-5">
-    <div class="d-flex align-items-center">
-        <p class="mb-0 me-3">Please rate:</p>
-        <div class="d-flex align-items-center" style="font-size: 12px;">
-            <input id="ratings" data-show-clear="false" type="text" class="rating" data-size="sm"  >
-        </div>
-    </div>
-    <a href="#"
-       class="btn btn-primary border border-secondary text-primary rounded-pill px-4 py-3">
-        Post Comment</a>
-</div>
-</div>
-</div>
-</form>
-</div>
-</div>
-</div>
-</div>
-</div>
-<!-- Single Products End -->
-
-<!-- Related Product Start -->
-<div class="container-fluid related-product">
-<div class="container">
-<div class="mx-auto text-center pb-5" style="max-width: 700px;">
-<h4 class="text-primary mb-4 border-bottom border-primary border-2 d-inline-block p-2 title-border-radius wow fadeInUp"
-data-wow-delay="0.1s">Related Products</h4>
-<p class="wow fadeInUp" data-wow-delay="0.2s">Similar products like the ones selected</p>
-</div>
-<div class="related-carousel owl-carousel pt-4">
-
-@if(count($relatedProducts['data'])>0)
-@foreach($relatedProducts['data'] as $relatedProduct)
-<div class="related-item rounded">
-<div class="related-item-inner border rounded">
-<div class="related-item-inner-item">
-<img src="{{$relatedProduct['images'][0]['original_image_url']}}" class="img-fluid w-100 rounded-top" alt="">
-@if($relatedProduct['is_new'])
-<div class="related-new">New</div>
-@endif
-@if($relatedProduct['on_sale'])
-<div class="related-new">Offer</div>
-@endif
-<div class="related-details">
-<a href="{{config('app.url')}}/product/{{$relatedProduct['id']}}"><i class="fa fa-eye fa-1x"></i></a>
-</div>
-</div>
-<div class="text-center rounded-bottom p-4">
-<a href="{{config('app.url')}}/product/{{$relatedProduct['id']}}" class="d-block h4">{{$relatedProduct['name']}}</a>
-@if($relatedProduct['on_sale'])
-<del class="me-2 fs-5">{{$relatedProduct['prices']['regular']['formatted_price']}}</del>
-@endif
-<span class="text-primary fs-5">{{$relatedProduct['prices']['final']['formatted_price']}}</span>
-</div>
-</div>
-<div class="related-item-add border border-top-0 rounded-bottom  text-center p-4 pt-0">
-<a href="#" class="btn btn-primary border-secondary rounded-pill py-2 px-4 mb-4"><i
-class="fas fa-shopping-cart me-2"></i> Add To Cart</a>
-<div class="d-flex justify-content-between align-items-center">
-<div class="d-flex">
-<i class="fas fa-star text-primary"></i>
-<i class="fas fa-star text-primary"></i>
-<i class="fas fa-star text-primary"></i>
-<i class="fas fa-star text-primary"></i>
-<i class="fas fa-star"></i>
-</div>
-<div class="d-flex">
-<a href="#"
-class="text-primary d-flex align-items-center justify-content-center me-3"><span
-    class="rounded-circle btn-sm-square border"><i
-        class="fas fa-random"></i></i></a>
-<a href="#"
-class="text-primary d-flex align-items-center justify-content-center me-0"><span
-    class="rounded-circle btn-sm-square border"><i class="fas fa-heart"></i></a>
-</div>
-</div>
-</div>
-</div>
-@endforeach
-@endif
-</div>
-</div>
-</div>
-<!-- Related Product End -->
 @include('partials.footer')
+
+<script>
+    $(document).ready(function(){
+        $("#product-main-carousel").owlCarousel({
+            items: 1,
+            loop: true,
+            nav: true,
+            dots: false,
+            navText: ["<i class='fa fa-chevron-left'></i>", "<i class='fa fa-chevron-right'></i>"]
+        });
+
+        $(".related-carousel").owlCarousel({
+            margin: 15,
+            loop: true,
+            autoplay: true,
+            responsive: {
+                0: { items: 1 },
+                576: { items: 2 },
+                768: { items: 3 }
+            }
+        });
+    });
+</script>

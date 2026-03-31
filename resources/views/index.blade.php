@@ -20,13 +20,18 @@
                 <img src="' . $product->base_image_url . '" class="img-fluid w-100" style="height:180px; object-fit:contain;" alt="' . $product->name . '">
                 <div class="product-action">
                     <a class="btn btn-outline-primary btn-square mx-1" href="' . $productUrl . '"><i class="fa fa-eye"></i></a>
-                    <a class="btn btn-outline-primary btn-square mx-1 add-cart" id="' . $product->id . '" href="#"><i class="fa fa-shopping-cart"></i></a>
+
+                    <button class="btn btn-outline-primary btn-square mx-1 add-to-cart-btn" data-id="' . $product->id . '">
+                        <i class="fa fa-shopping-cart"></i>
+                    </button>
                 </div>
             </div>
             <div class="text-center p-3 pt-0">
-                <button id="' . $product->id . '" class="btn btn-primary w-100 mb-2 add-cart py-2">Add to cart</button>
-                <a class="h6 d-block text-truncate mb-2 text-decoration-none" href="' . $productUrl . '">' . $product->name . '</a>
 
+                <button class="btn btn-primary w-100 mb-2 add-to-cart-btn py-2" data-id="' . $product->id . '">
+                    Add to cart
+                </button>
+                <a class="h6 d-block text-truncate mb-2 text-decoration-none" href="' . $productUrl . '">' . $product->name . '</a>
 
                 <div class="d-flex flex-column justify-content-center align-items-center">
                     <span class="text-primary fw-bold mb-0" style="font-size: 1.1rem;">' . core()->currency($minP) . '</span>

@@ -1,195 +1,167 @@
 @include('partials.header')
-<!-- Single Page Header start -->
-<div class="container-fluid page-header py-5">
-    <h1 class="text-center text-white display-6 wow fadeInUp" data-wow-delay="0.1s">Products Page</h1>
-    <ol class="breadcrumb justify-content-center mb-0 wow fadeInUp" data-wow-delay="0.3s">
-        <li class="breadcrumb-item"><a href="{{route('shop.home.index')}}">Home</a></li>
-        <li class="breadcrumb-item active text-white">Products</li>
-    </ol>
+
+@php
+    /**
+     * Helper function for rendering product cards to match the Home Page.
+     */
+    $renderProductCard = function($product) {
+        if (!$product) return '';
+
+        $minP = $product->getTypeInstance()->getMinimalPrice();
+        $regP = $product->price;
+        $disc = ($regP > 0) ? round((($regP - $minP) / $regP) * 100) : 0;
+
+        $productUrl = route('shop.home.product', $product->id);
+
+        return '
+        <div class="product-item rounded border bg-white h-100">
+            <div class="position-relative overflow-hidden p-3">
+                ' . ($disc > 0 ? '<div class="discount-badge">' . $disc . '% <br> <span>off</span></div>' : '') . '
+                <img src="' . $product->base_image_url . '" class="img-fluid w-100" style="height:180px; object-fit:contain;" alt="' . $product->name . '">
+                <div class="product-action">
+                    <a class="btn btn-outline-primary btn-square mx-1" href="' . $productUrl . '"><i class="fa fa-eye"></i></a>
+
+                    <button class="btn btn-outline-primary btn-square mx-1 add-to-cart-btn" data-id="' . $product->id . '">
+                        <i class="fa fa-shopping-cart"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="text-center p-3 pt-0">
+
+                <button class="btn btn-primary w-100 mb-2 add-to-cart-btn py-2" data-id="' . $product->id . '">
+                    Add to cart
+                </button>
+                <a class="h6 d-block text-truncate mb-2 text-decoration-none" href="' . $productUrl . '">' . $product->name . '</a>
+
+                <div class="d-flex flex-column justify-content-center align-items-center">
+                    <span class="text-primary fw-bold mb-0" style="font-size: 1.1rem;">' . core()->currency($minP) . '</span>
+                    ' . ($minP < $regP ? '<span class="text-muted text-decoration-line-through" style="font-size: 0.85rem; margin-top: -2px;">' . core()->currency($regP) . '</span>' : '') . '
+                </div>
+            </div>
+        </div>';
+    };
+@endphp
+
+<div class="container-fluid page-header py-5 mb-5" style="background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('{{ asset('themes/shop/electro/images/banner-1.jpg') }}'); background-size: cover;">
+    <div class="container text-center py-5">
+        <h1 class="text-white display-4 mb-3">Shop Products</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-center mb-0">
+                <li class="breadcrumb-item"><a href="{{ route('shop.home.index') }}" class="text-white">Home</a></li>
+                <li class="breadcrumb-item active text-white" aria-current="page">Products</li>
+            </ol>
+        </nav>
+    </div>
 </div>
-<!-- Single Page Header End -->
 
-<!-- Shop Page Start -->
-<div class="container-fluid shop py-5">
-    <div class="container py-5">
+<div class="container-fluid py-5">
+    <div class="container-fluid px-lg-5">
         <div class="row g-4">
-            <div class="col-lg-3 wow fadeInUp" data-wow-delay="0.1s">
-                <div class="product-categories mb-4">
-                    <h4>Products Categories</h4>
-                    <ul class="list-unstyled">
-                        @if(count($categories['data'])>0)
-                            @foreach($categories['data'] as $category)
-                                <li>
-                                    <div class="categories-item">
-                                        <a href="#" class="text-dark"><i class="fas fa-apple-alt text-secondary me-2"></i>
-                                            {{$category['name']}}</a>
-                                    </div>
-                                </li>
-                            @endforeach
-                        @endif
-                    </ul>
-                </div>
-                <div class="price mb-4">
-                    <h4 class="mb-2">Price</h4>
-                    <input type="range" class="form-range w-100" id="rangeInput" name="rangeInput" min="0" max="500"
-                           value="0" oninput="amount.value=rangeInput.value">
-                    <output id="amount" name="amount" min-velue="0" max-value="500" for="rangeInput">0</output>
-                    <div class=""></div>
-                </div>
+            <div class="col-lg-3">
+                <form id="filter-form" action="{{ route('shop.search.index') }}" method="GET" class="bg-light p-4 rounded shadow-sm">
+                    <input type="hidden" name="term" value="{{ request('term') }}">
 
-                <div class="featured-product mb-4">
-                    <h4 class="mb-3">Featured products</h4>
-
-                    @if(count($featuredProducts['data'])>0)
-                        @foreach($featuredProducts['data'] as $featuredProduct)
-                            <div class="featured-product-item">
-                                <div class="rounded me-4" style="width: 100px; height: 100px;">
-                                    <img src="{{$featuredProduct['images'][0]['original_image_url']}}" class="img-fluid rounded" alt="Image">
-                                </div>
-                                <div>
-                                    <h6 class="mb-2">SmartPhone</h6>
-                                    <div class="d-flex mb-2">
-                                        <input  data-show-clear="false" type="text" class="rating" data-size="sm" value="{{$featuredProduct['ratings']['average']}}" disabled>
-                                    </div>
-                                    <div class="d-flex mb-2">
-                                        @if($featuredProduct['on_sale'])
-                                            <h5 class="fw-bold me-2">{{$featuredProduct['prices']['regular']['formatted_price']}}</h5>
-                                        @endif
-                                        <h5 class="text-danger text-decoration-line-through">{{$featuredProduct['prices']['final']['formatted_price']}}</h5>
-                                    </div>
-                                </div>
+                    <div class="mb-4">
+                        <h4 class="mb-3 border-bottom pb-2">Categories</h4>
+                        @foreach($categories as $category)
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="category" value="{{ $category->id }}"
+                                       id="cat-{{ $category->id }}" {{ request('category') == $category->id ? 'checked' : '' }}
+                                       onchange="this.form.submit()">
+                                <label class="form-check-label text-dark" for="cat-{{ $category->id }}">
+                                    {{ $category->name }}
+                                </label>
                             </div>
                         @endforeach
-                    @endif
-
-            </div>
-            </div>
-
-
-            <div class="col-lg-9 wow fadeInUp" data-wow-delay="0.1s">
-
-                <!--
-                <div class="rounded mb-4 position-relative">
-                    <img src="img/product-banner-3.jpg" class="img-fluid rounded w-100" style="height: 250px;"
-                         alt="Image">
-                    <div class="position-absolute rounded d-flex flex-column align-items-center justify-content-center text-center"
-                         style="width: 100%; height: 250px; top: 0; left: 0; background: rgba(242, 139, 0, 0.3);">
-                        <h4 class="display-5 text-primary">SALE</h4>
-                        <h3 class="display-4 text-white mb-4">Get UP To 50% Off</h3>
-                        <a href="#" class="btn btn-primary rounded-pill">Shop Now</a>
                     </div>
-                </div>
-                -->
 
-                <div class="row g-4">
-                    <div class="col-xl-8">
-                        <div class="input-group w-100 mx-auto d-flex">
-                            <input type="search" class="form-control p-3" placeholder="keywords"
-                                   aria-describedby="search-icon-1">
-                            <span id="search-icon-1" class="input-group-text p-3"><i
-                                    class="fa fa-search"></i></span>
+                    <div class="mb-4">
+                        <h4 class="mb-3 border-bottom pb-2">Price Range</h4>
+                        <input type="range" class="form-range" name="price_max" min="0" max="100000" step="1000"
+                               value="{{ request('price_max') ?? 100000 }}" oninput="priceOutput.value = this.value" onchange="this.form.submit()">
+                        <div class="d-flex justify-content-between">
+                            <span class="small">Min: 0</span>
+                            <span class="text-primary fw-bold">Ksh <output id="priceOutput">{{ request('price_max') ?? 100000 }}</output></span>
                         </div>
                     </div>
-                    <div class="col-xl-4 text-end">
-                        <div class="bg-light ps-3 py-3 rounded d-flex justify-content-between">
-                            <label for="electronics">Sort By:</label>
-                            <select id="electronics" name="electronicslist"
-                                    class="border-0 form-select-sm bg-light me-3" form="electronicsform">
-                                <option value="volvo">Default Sorting</option>
-                                <option value="volv">Nothing</option>
-                                <option value="sab">Popularity</option>
-                                <option value="saab">Newness</option>
-                                <option value="opel">Average Rating</option>
-                                <option value="audio">Low to high</option>
-                                <option value="audi">High to low</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
 
-                <!--begin products -->
-                <div class="tab-content">
-                    <div id="tab-5" class="tab-pane fade show p-0 active">
-                        <div class="row g-4 product">
+                    <a href="{{ route('shop.home.products') }}" class="btn btn-outline-danger btn-sm w-100">Clear All Filters</a>
+                </form>
 
-                            @if(count($products['data'])>0)
-                                @foreach($products['data'] as $product)
-                            <div class="col-lg-4">
-                                <div class="product-item rounded wow fadeInUp" data-wow-delay="0.1s">
-                                    <div class="product-item-inner border rounded">
-                                        <div class="product-item-inner-item">
-                                            <img src="{{$product['images'][0]['original_image_url']}}" class="img-fluid w-100 rounded-top" alt="">
-                                            @if($product['is_new'])
-                                                <div class="product-new">New</div>
-                                            @endif
-                                            @if($product['on_sale'])
-                                                <div class="product-new">Offer</div>
-                                            @endif
-                                            <div class="product-details">
-                                                <a href="{{config('app.url')}}/product/{{$product['id']}}"><i class="fa fa-eye fa-1x"></i></a>
-                                            </div>
-                                        </div>
-                                        <div class="text-center rounded-bottom p-4">
-                                            <a href="{{config('app.url')}}/product/{{$product['id']}}" class="d-block h4">{{$product['name']}}</a>
-
-                                            @if($product['on_sale'])
-                                                <del class="me-2 fs-5">{{$products['data'][0]['prices']['regular']['formatted_price']}}</del>
-                                            @endif
-                                            <span class="text-primary fs-5">{{$products['data'][0]['prices']['final']['formatted_price']}}</span>
-                                        </div>
-                                    </div>
-                                    <div
-                                        class="product-item-add border border-top-0 rounded-bottom  text-center p-4 pt-0">
-                                        <a href="#"
-                                           class="btn btn-primary border-secondary rounded-pill py-2 px-4 mb-4"><i
-                                                class="fas fa-shopping-cart me-2"></i> Add To Cart</a>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div class="d-flex">
-                                                <i class="fas fa-star text-primary"></i>
-                                                <i class="fas fa-star text-primary"></i>
-                                                <i class="fas fa-star text-primary"></i>
-                                                <i class="fas fa-star text-primary"></i>
-                                                <i class="fas fa-star"></i>
-                                            </div>
-                                            <div class="d-flex">
-                                                <a href="#"
-                                                   class="text-primary d-flex align-items-center justify-content-center me-0"><span
-                                                        class="rounded-circle btn-sm-square border"><i
-                                                            class="fas fa-heart"></i></a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                                @endforeach
-                            @endif
-                            <!--end product-->
-                    </div>
-                            <div class="col-12 wow fadeInUp" data-wow-delay="0.1s">
-                                <div class="pagination d-flex justify-content-center mt-5">
-                                    @php
-                                        $currentPage = isset($_GET['page']) ? (int)$_GET['page'] : $products['meta']['current_page'];
-                                        $totalPages = $products['meta']['last_page']
-                                    @endphp
-
-                                        <!-- Previous Page Link -->
-                                    <a href="?page={{$currentPage - 1}}" class="rounded btn {{($currentPage == 1) ? 'disabled' : ''}}">&laquo;</a>
-
-                                    <!-- Page Number Links -->
-                                    @for($i = 1; $i <= $totalPages; $i++)
-                                        <a href="?page={{$i}}" class="btn {{($currentPage == $i) ? 'active' : ''}} rounded">{{$i}}</a>
-                                    @endfor
-
-                                    <!-- Next Page Link -->
-                                    <a href="?page={{$currentPage + 1}}" class="btn rounded {{($currentPage == $totalPages) ? 'disabled' : ''}}">&raquo;</a>
-                                </div>
+                <div class="mt-5 d-none d-lg-block">
+                    <h4 class="mb-4 border-bottom pb-2">Featured Products</h4>
+                    @foreach($featuredProducts->take(3) as $fProduct)
+                        <div class="d-flex align-items-center mb-3 bg-white p-2 rounded border">
+                            <img src="{{ $fProduct->base_image_url }}" class="img-fluid rounded" style="width: 60px; height: 60px; object-fit: contain;">
+                            <div class="ms-3">
+                                <h6 class="mb-0 text-truncate" style="max-width: 150px;">
+                                    <a href="{{ route('shop.home.product', $fProduct->url_key) }}" class="text-dark text-decoration-none">{{ $fProduct->name }}</a>
+                                </h6>
+                                <span class="text-primary fw-bold" style="font-size: 0.9rem;">{{ core()->currency($fProduct->getTypeInstance()->getMinimalPrice()) }}</span>
                             </div>
                         </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="col-lg-9">
+                <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom">
+                    <p class="mb-0 text-muted">
+                        Showing {{ $products->firstItem() ?? 0 }}–{{ $products->lastItem() ?? 0 }} of {{ $products->total() }} items
+                    </p>
+                    <div class="d-flex align-items-center">
+                        <span class="me-2 text-nowrap d-none d-md-inline">Sort By:</span>
+                        <select class="form-select form-select-sm border-0 bg-light" style="width: 150px;">
+                            <option>Default</option>
+                            <option>Price: Low to High</option>
+                            <option>Price: High to Low</option>
+                        </select>
                     </div>
+                </div>
+
+                <div class="row g-3">
+                    @forelse($products as $product)
+                        <div class="col-6 col-md-4 col-lg-3">
+                            {!! $renderProductCard($product) !!}
+                        </div>
+                    @empty
+                        <div class="col-12 text-center py-5">
+                            <div class="mb-3"><i class="fa fa-search fa-4x text-light-gray"></i></div>
+                            <h4 class="text-muted">No products found for "{{ request('term') }}"</h4>
+                            <p>Try adjusting your filters or search keywords.</p>
+                        </div>
+                    @endforelse
+                </div>
+
+                <div class="d-flex justify-content-center mt-5">
+                    {{ $products->appends(request()->input())->links('pagination::bootstrap-4') }}
                 </div>
             </div>
         </div>
     </div>
 </div>
-<!-- Shop Page End -->
+
 @include('partials.footer')
+
+<style>
+    /* Card Specific Styles to match Index exactly */
+    .product-item img { transition: transform 0.5s ease; }
+    .product-item:hover img { transform: scale(1.08); }
+
+    .discount-badge {
+        position: absolute; top: 10px; right: 10px; background: #ffb400; color: #000;
+        font-weight: bold; padding: 4px 8px; border-radius: 2px; line-height: 1.1;
+        text-align: center; z-index: 10; font-size: 13px;
+    }
+    .discount-badge span { font-size: 9px; text-transform: uppercase; display: block; }
+
+    .product-action {
+        position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(255, 255, 255, 0.6); opacity: 0; transition: 0.5s;
+    }
+    .product-item:hover .product-action { opacity: 1; }
+    .btn-square { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+
+    .text-light-gray { color: #dee2e6; }
+</style>

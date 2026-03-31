@@ -6,7 +6,9 @@ use Barryvdh\Debugbar\Facades\Debugbar;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\ParallelTesting;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Webkul\Category\Repositories\CategoryRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -37,6 +39,19 @@ class AppServiceProvider extends ServiceProvider
     {
         ParallelTesting::setUpTestDatabase(function (string $database, int $token) {
             Artisan::call('db:seed');
+        });
+
+        View::composer('partials.header', function ($view) {
+            // Resolve the Category Repository from the container
+            $categoryRepository = app(CategoryRepository::class);
+
+            // Get the visible category tree for the current channel
+            // This follows Bagisto's core logic for the shop front
+            $categories = $categoryRepository->getVisibleCategoryTree(
+                core()->getCurrentChannel()->root_category_id
+            );
+
+            $view->with('categories', $categories);
         });
     }
 }

@@ -69,39 +69,94 @@
         }
     });
 
-    // Add to Cart Logic
-    $(document).on('click', ".add-cart", function (e) {
-        e.preventDefault();
-        let button = $(this);
-        let id = button.attr("id");
-        let cartBadgeElement = $('.cart-badge').first();
-        let cartBadge = parseInt(cartBadgeElement.text()) || 0;
 
-        if (!id) return;
 
-        $.ajax({
-            url: "./api/v1/products?id=" + id + "&sort=id",
-            type: "GET",
-            dataType: "json",
-            beforeSend: function () {
-                // Preserve button width while loading
-                button.css('width', button.outerWidth());
-                button.html('<span class="spinner-border spinner-border-sm"></span>').attr('disabled', true);
-            },
-            success: function(response) {
-                button.html('<i class="fas fa-check"></i>').addClass('btn-success').removeClass('btn-primary');
 
-                // Reset button after 2 seconds
-                setTimeout(function() {
-                    button.html('Add to cart').removeClass('btn-success').addClass('btn-primary').attr('disabled', false).css('width', '');
-                }, 2000);
+    $(document).ready(function() {
+        // 1. Quantity Controls (Global for +/- buttons)
+        $(document).on('click', '.btn-plus, .btn-minus', function(e) {
+            e.preventDefault();
+            let isPlus = $(this).hasClass('btn-plus');
+            let input = $(this).closest('.quantity').find('input');
+            let currentVal = parseInt(input.val()) || 1;
 
-                let newTotal = cartBadge + 1;
-                $('.cart-badge, .cart-total').text(newTotal);
-            },
-            error: function() {
-                button.html('Add to cart').attr('disabled', false).css('width', '');
+            if (isPlus) {
+                input.val(currentVal + 1);
+            } else if (currentVal > 1) {
+                input.val(currentVal - 1);
             }
+        });
+
+        // 2. Add to Cart Logic
+        $(document).on('click', '.add-to-cart-btn', function(e) {
+            e.preventDefault();
+
+            // Safety check for AppConfig
+            if (typeof window.AppConfig === 'undefined') {
+                console.error("AppConfig missing from header!");
+                return;
+            }
+
+            let productId = $(this).data('id');
+            let btn = $(this);
+            let originalContent = btn.html();
+
+            // Dynamic Quantity Logic:
+            // Look for an input named 'quantity' or with class 'qty-input' near the button,
+            // otherwise check the whole page, otherwise default to 1.
+            let qtyInput = btn.closest('.single-product').find('#qty-input');
+            let quantity = qtyInput.length ? qtyInput.val() : 1;
+
+            // Start Loading State
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+            $.ajax({
+                url: window.AppConfig.cartAddUrl + "/" + productId,
+                method: "POST",
+                data: {
+                    _token: window.AppConfig.csrfToken,
+                    quantity: quantity
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        // Update Header Counters
+                        $('.cart-count').text(response.cart_count);
+                        $('.cart-total-display').html(response.cart_total);
+
+                        // Show Success Feedback
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Added!',
+                                text: response.message,
+                                timer: 1500,
+                                showConfirmButton: false,
+                                toast: true,
+                                position: 'top-end'
+                            });
+                        }
+
+                        // Open Mini-Cart Drawer (Bootstrap 5)
+                        let cartEl = document.getElementById('miniCartDrawer');
+                        if (cartEl) {
+                            let bsOffcanvas = bootstrap.Offcanvas.getInstance(cartEl) || new bootstrap.Offcanvas(cartEl);
+                            bsOffcanvas.show();
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    let errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong";
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'error', title: 'Error', text: errorMsg });
+                    } else {
+                        alert(errorMsg);
+                    }
+                },
+                complete: function() {
+                    // Reset Button
+                    btn.prop('disabled', false).html(originalContent);
+                }
+            });
         });
     });
 
