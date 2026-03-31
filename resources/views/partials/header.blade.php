@@ -290,6 +290,42 @@
     </div>
 </div>
 
+
+<div class="mobile-bottom-nav d-lg-none">
+    <div class="nav-item">
+        <a href="{{ route('shop.home.index') }}" class="{{ request()->is('/') ? 'active' : '' }}">
+            <i class="fa fa-home"></i>
+            <span>Home</span>
+        </a>
+    </div>
+
+    <div class="nav-item">
+        <a href="{{ route('shop.checkout.cart.index') }}" class="position-relative {{ request()->is('checkout/cart*') ? 'active' : '' }}">
+            <i class="fa fa-shopping-cart"></i>
+            {{-- Inline calculation to prevent "Undefined Variable" error --}}
+            <span class="nav-cart-badge">
+                {{ Webkul\Checkout\Facades\Cart::getCart() ? Webkul\Checkout\Facades\Cart::getCart()->items_count : 0 }}
+            </span>
+            <span>Cart</span>
+        </a>
+    </div>
+
+    <div class="nav-item">
+        <a href="{{ route('shop.checkout.onepage.index') }}">
+            <i class="fa fa-credit-card"></i>
+            <span>Checkout</span>
+        </a>
+    </div>
+
+    <div class="nav-item">
+        <a href="" class="{{ request()->is('customer/account*') ? 'active' : '' }}">
+            <i class="fa fa-user"></i>
+            <span>Account</span>
+        </a>
+    </div>
+</div>
+
+
 <a href="https://wa.me/254721966663" class="whatsapp-float-left" target="_blank">
     <i class="fab fa-whatsapp"></i>
 </a>

@@ -74,18 +74,35 @@ class HomeController extends Controller
         ));
     }
 
-    public function category(Request $request, $id)
+    public function category($id)
     {
+        // 1. Fetch the category object (needed for the header/name)
         $category = $this->categoryRepository->findOrFail($id);
-        $products = $this->productRepository->getAll(['category_id' => $id]);
-        $categories = $this->categoryRepository->getVisibleCategoryTree(core()->getCurrentChannel()->root_category_id);
 
-        return view('category', compact('category', 'products', 'categories'));
+        // 2. Wrap the ID in an array for getAll()
+        // The key MUST be 'category_id'
+        $products = $this->productRepository->getAll([
+            'category_id' => $id
+        ]);
+        $featuredProducts = $this->productRepository->getAll([
+            'featured' => 1,
+            'status'   => 1
+        ])->take(3);
+
+        // 3. Get other sidebar data
+        $rootCategoryId = core()->getCurrentChannel()->root_category_id;
+        $categories = $this->categoryRepository->getVisibleCategoryTree($rootCategoryId);
+
+        return view('category', compact('category', 'products', 'categories','featuredProducts'));
     }
 
     public function categories(Request $request)
     {
-        $categories = $this->categoryRepository->getVisibleCategoryTree(core()->getCurrentChannel()->root_category_id);
+        // Get the root category ID for the current channel
+        $rootCategoryId = core()->getCurrentChannel()->root_category_id;
+
+        // Get the direct children of the root category
+        $categories = $this->categoryRepository->getVisibleCategoryTree($rootCategoryId);
 
         return view('categories', compact('categories'));
     }
