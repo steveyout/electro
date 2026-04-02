@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\OnepageController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SessionController;
 use Illuminate\Support\Facades\Route;
@@ -41,6 +42,29 @@ Route::group(['middleware' => ['web', 'locale', 'theme', 'currency']], function 
 
         Route::delete('logout', [SessionController::class, 'destroy'])->name('customer.session.destroy');
     });
+
+    // Shopping Cart Routes
+    Route::prefix('checkout/cart')->group(function () {
+        Route::get('', [CartController::class, 'index'])->name('shop.checkout.cart.index');
+        Route::post('add/{id}', [CartController::class, 'add'])->name('shop.cart.add');
+        Route::delete('remove/{id}', [CartController::class, 'remove'])->name('shop.cart.remove');
+        Route::post('update', [CartController::class, 'update'])->name('shop.cart.update');
+    });
+
+    // Checkout Flow Routes
+    Route::prefix('checkout/onepage')->group(function () {
+        Route::get('', [OnepageController::class, 'index'])->name('shop.checkout.onepage.index');
+        Route::post('save-address', [OnepageController::class, 'saveAddress'])->name('shop.checkout.save_address');
+        Route::post('save-shipping', [OnepageController::class, 'saveShipping'])->name('shop.checkout.save_shipping');
+        Route::post('save-payment', [OnepageController::class, 'savePayment'])->name('shop.checkout.save_payment');
+        Route::post('save-order', [OnepageController::class, 'saveOrder'])->name('shop.checkout.save_order');
+        Route::get('success', [OnepageController::class, 'success'])->name('shop.checkout.success');
+    });
+
+    // Custom M-Pesa STK Push Route
+    Route::post('mpesa/stk-push', [App\Http\Controllers\MpesaController::class, 'stkPush'])
+        ->name('api.mpesa.stkpush');
+
 });
 
 // /cart
