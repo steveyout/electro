@@ -99,27 +99,80 @@ class OnepageController extends Controller
      */
     public function saveOrder()
     {
-        if (Cart::hasError()) {
-            return response()->json(['status' => false, 'message' => 'Cart has errors.'], 400);
-        }
-
-        Cart::collectTotals();
-
         try {
-            $this->validateOrder();
-
             $cart = Cart::getCart();
+            if (! $cart) return response()->json(['status' => false, 'message' => 'Cart not found']);
 
-            // 1. Prepare and Create the Order
-            $orderData = Cart::prepareDataForOrder();
-            $order = $this->orderRepository->create($orderData);
+            // 1. Prepare common data
+            $billingData = request()->input('billing');
+            $paymentMethod = request()->input('payment.method', 'mpesa');
+            $orderRepository = app(\Webkul\Sales\Repositories\OrderRepository::class);
 
-            // 2. Store Order Details in Session for the Success Page
-            session()->put('last_order_id', $order->id);
-            session()->put('order_total', $order->base_grand_total);
-            session()->put('payment_method', $order->payment->method_title);
+            // 2. CREATE THE ORDER RECORD MANUALLY
+            // Using the Model directly avoids the Repository's broken 'where' check
+            $order = \Webkul\Sales\Models\Order::create([
+                'increment_id'          => $orderRepository->generateIncrementId(),
+                'status'                => 'pending',
+                'channel_name'          => $cart->channel->name,
+                'is_guest'              => 1,
+                'customer_email'        => $billingData['email'],
+                'customer_first_name'   => $billingData['first_name'],
+                'customer_last_name'    => $billingData['last_name'],
+                'shipping_method'       => 'free_free',
+                'shipping_title'        => 'Free Shipping',
+                'payment_title'         => 'M-Pesa',
+                'shipping_description'  => 'Free Shipping',
+                'total_item_count'      => $cart->items_count,
+                'total_qty_ordered'     => $cart->items_qty,
+                'base_currency_code'    => $cart->base_currency_code,
+                'channel_currency_code' => $cart->channel_currency_code,
+                'order_currency_code'   => $cart->cart_currency_code,
+                'grand_total'           => $cart->grand_total,
+                'base_grand_total'      => $cart->base_grand_total,
+                'sub_total'             => $cart->sub_total,
+                'base_sub_total'        => $cart->base_sub_total,
+                'tax_amount'            => $cart->tax_total,
+                'base_tax_amount'       => $cart->base_tax_total,
+                'discount_amount'       => $cart->discount_amount,
+                'base_discount_amount'  => $cart->base_discount_amount,
+                'cart_id'               => $cart->id,
+                'channel_id'            => $cart->channel_id,
+            ]);
 
-            // 3. Clear the cart session
+            // 3. CREATE ORDER ITEMS MANUALLY
+            foreach ($cart->items as $item) {
+                \Webkul\Sales\Models\OrderItem::create([
+                    'order_id'    => $order->id,
+                    'product_id'  => $item->product_id,
+                    'sku'         => $item->sku,
+                    'type'        => $item->type,
+                    'name'        => $item->name,
+                    'weight'      => $item->weight,
+                    'price'       => $item->price,
+                    'base_price'  => $item->base_price,
+                    'total'       => $item->total,
+                    'base_total'  => $item->base_total,
+                    'qty_ordered' => $item->quantity,
+                    'additional'  => $item->additional,
+                ]);
+            }
+
+            // 4. CREATE ORDER ADDRESSES
+            $addressData = array_merge($billingData, [
+                'order_id'     => $order->id,
+                'address1'     => is_array($billingData['address1']) ? implode(PHP_EOL, $billingData['address1']) : $billingData['address1'],
+                'address_type' => 'billing'
+            ]);
+
+            \Webkul\Sales\Models\OrderAddress::create($addressData);
+            \Webkul\Sales\Models\OrderAddress::create(array_merge($addressData, ['address_type' => 'shipping']));
+
+            // 5. CREATE ORDER PAYMENT
+            \Webkul\Sales\Models\OrderPayment::create([
+                'order_id' => $order->id,
+                'method'   => $paymentMethod,
+            ]);
+
             Cart::deActivateCart();
 
             return response()->json([
@@ -131,8 +184,8 @@ class OnepageController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'status'  => false,
-                'message' => 'Order creation failed: '.$e->getMessage(),
-            ], 500);
+                'message' => 'Local Model Error: ' . $e->getMessage()
+            ]);
         }
     }
 

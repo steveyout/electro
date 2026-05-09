@@ -26,27 +26,31 @@ class CartController extends Controller
     public function add($id)
     {
         try {
+            // 1. Fetch the Product Object
             $product = $this->productRepository->find($id);
 
             if (! $product) {
                 return response()->json(['status' => 'error', 'message' => 'Product not found.'], 404);
             }
 
-            // Using Bagisto's addProduct logic
-            $cart = Cart::addProduct($product->id, [
+            // 2. THE FIX: Pass the $product OBJECT, not the $product->id
+            $cart = Cart::addProduct($product, [
                 'quantity'   => request()->get('quantity', 1),
                 'product_id' => $product->id,
             ]);
 
-            if (! $cart) {
-                return response()->json(['status' => 'error', 'message' => 'Could not add product.'], 400);
+            if (is_array($cart) && isset($cart['error'])) {
+                return response()->json(['status' => 'error', 'message' => $cart['error']], 400);
             }
+
+            // 3. Return updated cart details
+            $currentCart = Cart::getCart();
 
             return response()->json([
                 'status'     => 'success',
                 'message'    => 'Item added to cart!',
-                'cart_count' => Cart::getCart()->items_count,
-                'cart_total' => core()->currency(Cart::getCart()->base_grand_total),
+                'cart_count' => $currentCart ? $currentCart->items_count : 0,
+                'cart_total' => $currentCart ? core()->currency($currentCart->base_grand_total) : 0,
             ]);
 
         } catch (\Exception $e) {
