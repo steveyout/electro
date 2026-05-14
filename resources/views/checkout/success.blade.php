@@ -16,20 +16,21 @@
             <div class="card border-0 bg-light rounded-4 p-4 mb-4 text-start">
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Order ID:</span>
-                    <span class="fw-bold">#{{ session('last_order_id') ?? '10001' }}</span>
+                    <span class="fw-bold">#{{ session('last_order_id') ?? 'PENDING' }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Payment Method:</span>
-                    <span class="fw-bold text-uppercase">
-                        {{-- Logic to show method name --}}
-                        {{ request()->get('method') == 'mpesa' ? 'M-Pesa' : 'Pay on Delivery' }}
-                    </span>
+                    <span class="fw-bold text-uppercase">M-Pesa</span>
                 </div>
                 <div class="d-flex justify-content-between border-top pt-2 mt-2">
                     <span class="h6 mb-0 fw-bold">Total Amount:</span>
                     <span class="h6 mb-0 fw-bold text-primary">
-                        {{-- You can pass the actual total via session or variable --}}
-                        {!! core()->currency(session('order_total') ?? 0) !!}
+                        {{-- We use a fallback check here --}}
+                        @if(session()->has('order_total'))
+                            {!! core()->currency(session('order_total')) !!}
+                        @else
+                            <span class="small text-muted">Calculating...</span>
+                        @endif
                     </span>
                 </div>
             </div>
@@ -38,15 +39,23 @@
                 <a href="{{ route('shop.home.index') }}" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow-sm">
                     CONTINUE SHOPPING
                 </a>
-                <a href="{{ route('shop.customer.orders.index') }}" class="btn btn-outline-dark btn-lg rounded-pill px-5 fw-bold">
-                    VIEW ORDER
-                </a>
+
+                {{-- Robust Route Check for 'VIEW ORDER' --}}
+                @if (Route::has('customer.orders.index') && auth()->guard('customer')->check())
+                    <a href="{{ route('customer.orders.index') }}" class="btn btn-outline-dark btn-lg rounded-pill px-5 fw-bold">
+                        VIEW ORDERS
+                    </a>
+                @else
+                    <a href="{{ url('/') }}" class="btn btn-outline-dark btn-lg rounded-pill px-5 fw-bold">
+                        RETURN HOME
+                    </a>
+                @endif
             </div>
 
             <div class="mt-5 p-3 border rounded-3 bg-white">
                 <p class="small text-muted mb-0">
                     <i class="fas fa-info-circle text-primary me-2"></i>
-                    A confirmation email has been sent to your registered address. For any queries, contact our support at <strong>+254 721 966663</strong>.
+                    A confirmation email has been sent. For any queries, contact our support at <strong>+254 721 966663</strong>.
                 </p>
             </div>
         </div>
@@ -54,12 +63,11 @@
 </div>
 
 <style>
-    /* Success Icon Styling */
     .success-icon-wrapper {
         width: 100px;
         height: 100px;
         background: #ffffff;
-        border: 5px solid #ff6600; /* Your Theme Orange */
+        border: 5px solid #ff6600;
         color: #ff6600;
         font-size: 50px;
         display: inline-flex;
@@ -74,11 +82,9 @@
         100% { transform: scale(1); opacity: 1; }
     }
 
-    /* Primary color override for your orange theme */
     .text-primary { color: #ff6600 !important; }
     .btn-primary { background-color: #ff6600 !important; border-color: #ff6600 !important; }
     .btn-primary:hover { background-color: #e65c00 !important; }
-    .btn-outline-dark:hover { background-color: #333; color: #fff; }
 </style>
 
 @include('partials.footer')

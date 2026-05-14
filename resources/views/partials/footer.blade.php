@@ -57,7 +57,7 @@
                 </span>
             </div>
             <div class="col-md-6 text-center text-md-end text-white">
-                Designed By <a class="border-bottom text-white" href="https://htmlcodex.com">HTML Codex</a>
+                Designed By <a class="border-bottom text-white" href="http://vexaryze.co.ke/">Vexaryze</a>
             </div>
         </div>
     </div>

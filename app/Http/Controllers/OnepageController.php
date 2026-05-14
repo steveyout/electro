@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use DB;
 use Illuminate\Http\Request;
+use Log;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Customer\Repositories\CustomerRepository;
 use Webkul\Payment\Facades\Payment;
-use Webkul\Sales\Repositories\OrderRepository;
-use Webkul\Shipping\Facades\Shipping;
 use Webkul\Sales\Models\Order;
-use Webkul\Sales\Models\OrderItem;
 use Webkul\Sales\Models\OrderAddress;
 use Webkul\Sales\Models\OrderPayment;
+use Webkul\Sales\Repositories\OrderRepository;
+use Webkul\Shipping\Facades\Shipping;
 
 class OnepageController extends Controller
 {
@@ -145,7 +146,7 @@ class OnepageController extends Controller
                 'increment_id'          => $this->orderRepository->generateIncrementId(),
             ];
 
-            \DB::beginTransaction();
+            DB::beginTransaction();
 
             // 2. Create Order using the actual Model class (bypass Proxy)
             $order = \Webkul\Sales\Models\Order::create($orderData);
@@ -190,25 +191,28 @@ class OnepageController extends Controller
                 'phone'        => $billingData['phone'],
             ];
 
-            \Webkul\Sales\Models\OrderAddress::create(array_merge($addressPayload, [
-                'address_type' => 'order_billing'
+            OrderAddress::create(array_merge($addressPayload, [
+                'address_type' => 'order_billing',
             ]));
 
-            \Webkul\Sales\Models\OrderAddress::create(array_merge($addressPayload, [
-                'address_type' => 'order_shipping'
+            OrderAddress::create(array_merge($addressPayload, [
+                'address_type' => 'order_shipping',
             ]));
 
             // 5. Create Payment record manually (M-Pesa)
-            \Webkul\Sales\Models\OrderPayment::create([
+            OrderPayment::create([
                 'order_id' => $order->id,
                 'method'   => 'mpesa',
             ]);
 
-            \DB::commit();
+            DB::commit();
 
             // 6. Success and Redirect
+            // 6. PERSISTENT SESSION STORAGE
+            // We use 'put' instead of 'flash' to ensure data survives redirects
+            session()->put('last_order_id', $order->increment_id);
+            session()->put('order_total', $order->grand_total);
             Cart::deActivateCart();
-            session()->put('order_id', $order->id);
 
             return response()->json([
                 'status'       => true,
@@ -216,12 +220,12 @@ class OnepageController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \DB::rollBack();
-            \Log::error('Manual Checkout Final Fix: ' . $e->getMessage());
+            DB::rollBack();
+            Log::error('Manual Checkout Final Fix: '.$e->getMessage());
 
             return response()->json([
                 'status'  => false,
-                'message' => 'Manual Finalization Error: ' . $e->getMessage()
+                'message' => 'Manual Finalization Error: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -229,7 +233,9 @@ class OnepageController extends Controller
     public function success()
     {
         $order = Order::find(session('order_id'));
-        if (!$order) return redirect()->route('shop.home.index');
+        if (! $order) {
+            return redirect()->route('shop.home.index');
+        }
 
         return view('checkout.success', compact('order'));
     }

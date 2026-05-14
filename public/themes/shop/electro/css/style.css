@@ -971,3 +971,63 @@
 @media (max-width: 991.98px) {
     body { padding-bottom: 70px; }
 }
+
+/* Container for pagination */
+.pagination {
+    display: flex;
+    padding-left: 0;
+    list-style: none;
+    border-radius: 0.25rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* Individual Page Item */
+.page-item {
+    margin: 0 2px; /* Small gap between boxes */
+}
+
+/* The Link/Box itself */
+.page-link {
+    position: relative;
+    display: block;
+    padding: 0.75rem 1.25rem;
+    line-height: 1.25;
+    color: #333;
+    background-color: #fff;
+    border: 1px solid #dee2e6; /* Grey border as seen in your image */
+    text-decoration: none;
+    transition: all 0.3s ease;
+    min-width: 45px;
+    text-align: center;
+}
+
+/* Hover State */
+.page-link:hover {
+    z-index: 2;
+    color: #fff;
+    background-color: #ff6600; /* Orange hover */
+    border-color: #ff6600;
+}
+
+/* Active Page State */
+.page-item.active .page-link {
+    z-index: 3;
+    color: #fff;
+    background-color: #ff6600; /* Jumia Orange */
+    border-color: #ff6600;
+}
+
+/* Disabled State (Arrows) */
+.page-item.disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+
+/* Specific styling for the arrows to match the "rounded top" look in your image */
+.page-item:first-child .page-link {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
