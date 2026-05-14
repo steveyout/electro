@@ -88,7 +88,7 @@
         {{-- Center: Hero Carousel --}}
         <div class="col-lg-7 col-md-8 col-12">
             @if($featuredProducts->count() > 0)
-                <div class="shadow-sm rounded overflow-hidden h-100" style="background: #F4F6F7;">
+                <div class="shadow-sm rounded overflow-hidden h-100 position-relative" style="background: #F4F6F7;">
                     <div class="header-carousel owl-carousel py-0">
                         @foreach($featuredProducts as $product)
                             @php
@@ -141,7 +141,7 @@
     </div>
 </div>
 
-{{-- Category Slider Section (Jumia Style) --}}
+{{-- Category Slider Section --}}
 <div class="container-fluid px-lg-5 mb-5">
     <div class="category-slider-wrapper p-3 rounded shadow-sm" style="background: #73C2D9;">
         <div class="category-carousel owl-carousel">
@@ -155,8 +155,6 @@
                                         background-size: cover;
                                         background-position: center;
                                     @endif">
-
-                            {{-- Fallback icon if no background logo --}}
                             @if(!$category->logo_url)
                                 <i class="fas fa-shopping-bag text-primary fa-2x"></i>
                             @endif
@@ -169,7 +167,7 @@
     </div>
 </div>
 
-{{-- Services Section --}}
+{{-- Restored: Services Section --}}
 <div class="container-fluid px-lg-5 mb-5">
     <div class="row g-0 bg-white border rounded shadow-sm">
         @php
@@ -192,7 +190,7 @@
     </div>
 </div>
 
-{{-- Featured Products Tabs --}}
+{{-- Restored: Featured Products Tabs --}}
 <div class="container-fluid product py-5">
     <div class="container-fluid px-lg-5">
         <div class="tab-class">
@@ -223,22 +221,7 @@
     </div>
 </div>
 
-{{-- Product Carousel Section --}}
-<div class="container-fluid products py-5 bg-light">
-    <div class="container-fluid px-lg-5">
-        <div class="mx-auto text-center mb-5" style="max-width: 900px;">
-            <h4 class="text-primary border-bottom border-primary border-2 d-inline-block p-2">Products</h4>
-            <h1 class="mb-0 display-3">All Items</h1>
-        </div>
-        <div class="productList-carousel owl-carousel pt-4">
-            @foreach($products as $product)
-                <div class="h-100 px-1">{!! $renderProductCard($product) !!}</div>
-            @endforeach
-        </div>
-    </div>
-</div>
-
-{{-- Dynamic Category Sections --}}
+{{-- Restored: Dynamic Category Sections --}}
 @isset($homeCategories)
     @foreach($homeCategories as $category)
         @php
@@ -279,6 +262,17 @@
 
 <script>
     $(document).ready(function(){
+        // Restored Header Carousel with dots
+        $(".header-carousel").owlCarousel({
+            items: 1,
+            autoplay: true,
+            smartSpeed: 2000,
+            loop: true,
+            dots: true,
+            nav : false,
+            navText : ['<i class="bi bi-arrow-left"></i>', '<i class="bi bi-arrow-right"></i>']
+        });
+
         $(".category-carousel").owlCarousel({
             autoplay: true,
             smartSpeed: 1000,
@@ -286,10 +280,7 @@
             dots: false,
             loop: true,
             nav : true,
-            navText : [
-                '<i class="bi bi-arrow-left"></i>',
-                '<i class="bi bi-arrow-right"></i>'
-            ],
+            navText : ['<i class="bi bi-arrow-left"></i>', '<i class="bi bi-arrow-right"></i>'],
             responsive: {
                 0:{ items:3 },
                 576:{ items:4 },
@@ -301,46 +292,41 @@
 </script>
 
 <style>
-    /* Category Slider Specific */
-    .category-circle-item {
-        transition: transform 0.3s ease;
-        border: 2px solid white;
-    }
-    .category-circle-item:hover {
-        transform: scale(1.05);
-    }
-    .category-slider-wrapper .owl-nav {
+    /* Styling for the Dots on the Header Carousel */
+    .header-carousel .owl-dots {
         position: absolute;
-        top: 50%;
-        width: 100%;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
         display: flex;
-        justify-content: space-between;
-        transform: translateY(-50%);
-        pointer-events: none;
-    }
-    .category-slider-wrapper .owl-nav button {
-        pointer-events: all;
-        background: rgba(255,255,255,0.8) !important;
-        border-radius: 50%;
-        width: 30px;
-        height: 30px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        gap: 8px;
+        z-index: 10;
     }
 
-    /* Existing UI Styles */
+    .header-carousel .owl-dot span {
+        width: 12px;
+        height: 12px;
+        background: rgba(0, 0, 0, 0.2) !important;
+        display: block;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+
+    .header-carousel .owl-dot.active span {
+        background: #ff6600 !important;
+        width: 25px;
+        border-radius: 10px;
+    }
+
+    /* Category Slider Specific */
+    .category-circle-item { transition: transform 0.3s ease; border: 2px solid white; }
+    .category-circle-item:hover { transform: scale(1.05); }
+
+    /* General UI */
     .category-sidebar .list-group-item { transition: all 0.2s ease; background: transparent; }
-    .category-sidebar .category-item { position: relative; }
-    .category-sidebar .category-item:hover > .list-group-item {
-        color: #ff6600;
-        background: #f8f9fa;
-        padding-left: 1rem;
-    }
-    .category-submenu {
-        position: absolute; top: 0; left: 100%; width: 350px; min-height: 100%;
-        background: white; z-index: 1050; display: none; border-left: 1px solid #eee;
-    }
+    .category-sidebar .category-item:hover > .list-group-item { color: #ff6600; background: #f8f9fa; padding-left: 1rem; }
+    .category-submenu { position: absolute; top: 0; left: 100%; width: 350px; min-height: 100%; background: white; z-index: 1050; display: none; border-left: 1px solid #eee; }
     .category-item:hover .category-submenu { display: block; }
-    .hover-orange:hover { color: #ff6600 !important; }
     .product-item img { transition: transform 0.5s ease; height: 180px; object-fit: contain; }
     .product-item:hover img { transform: scale(1.08); }
     .discount-badge {
@@ -356,7 +342,6 @@
     }
     .product-item:hover .product-action { opacity: 1; }
     .btn-square { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
-    .header-carousel.owl-carousel .owl-stage-outer { overflow: hidden !important; width: 100% !important; }
 </style>
 
 

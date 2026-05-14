@@ -40,9 +40,9 @@
         autoplay: true,
         smartSpeed: 2000,
         loop: true,
-        dots: false,
-        nav : true,
-        navText : ['<i class="bi bi-arrow-left"></i>', '<i class="bi bi-arrow-right"></i>']
+        dots: true,
+        nav: false,
+        autoplayHoverPause: true
     });
 
     // Main Product Carousel - 5 items (Desktop) / 2 items (Mobile)
@@ -91,7 +91,6 @@
         $(document).on('click', '.add-to-cart-btn', function(e) {
             e.preventDefault();
 
-            // Safety check for AppConfig
             if (typeof window.AppConfig === 'undefined') {
                 console.error("AppConfig missing from header!");
                 return;
@@ -101,13 +100,9 @@
             let btn = $(this);
             let originalContent = btn.html();
 
-            // Dynamic Quantity Logic:
-            // Look for an input named 'quantity' or with class 'qty-input' near the button,
-            // otherwise check the whole page, otherwise default to 1.
             let qtyInput = btn.closest('.single-product').find('#qty-input');
             let quantity = qtyInput.length ? qtyInput.val() : 1;
 
-            // Start Loading State
             btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
 
             $.ajax({
@@ -119,11 +114,24 @@
                 },
                 success: function(response) {
                     if (response.status === 'success') {
-                        // Update Header Counters
+                        // 1. Update Header Counters
                         $('.cart-count').text(response.cart_count);
-                        $('.cart-total-display').html(response.cart_total);
 
-                        // Show Success Feedback
+                        // 2. Update the Drawer Content Smartly
+                        if (response.cart_html) {
+                            // Create a virtual element to parse the returned HTML
+                            let htmlData = $(response.cart_html);
+
+                            // Extract just the items list
+                            let newItems = htmlData.find('#mini-cart-list').html();
+                            $('#mini-cart-list').html(newItems);
+
+                            // Update the totals in the footer
+                            let newTotal = htmlData.find('.cart-total-display').first().html();
+                            $('.cart-total-display').html(newTotal);
+                        }
+
+                        // 3. Show Success Feedback
                         if (typeof Swal !== 'undefined') {
                             Swal.fire({
                                 icon: 'success',
@@ -136,7 +144,7 @@
                             });
                         }
 
-                        // Open Mini-Cart Drawer (Bootstrap 5)
+                        // 4. Open Mini-Cart Drawer
                         let cartEl = document.getElementById('miniCartDrawer');
                         if (cartEl) {
                             let bsOffcanvas = bootstrap.Offcanvas.getInstance(cartEl) || new bootstrap.Offcanvas(cartEl);
@@ -153,11 +161,78 @@
                     }
                 },
                 complete: function() {
-                    // Reset Button
                     btn.prop('disabled', false).html(originalContent);
                 }
             });
         });
+
+
+        // 3. Remove from Cart Logic
+        $(document).on('click', '.remove-cart-item', function(e) {
+            e.preventDefault();
+
+            let btn = $(this);
+            let itemId = btn.data('id');
+            let row = btn.closest('.cart-item-row');
+
+            // Optional: Add a subtle loading state to the row
+            row.css('opacity', '0.5');
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+            $.ajax({
+                // Ensure this URL matches your Bagisto route for removing items
+                url: "./checkout/cart/remove/" + itemId,
+                method: "DELETE", // Bagisto standard is GET for remove, but check your routes
+                data: {
+                    _token: window.AppConfig.csrfToken,
+                    id:itemId
+                },
+                success: function(response) {
+                    if (response.status === 'success' || response.message) {
+                        // 1. Update Header Counters
+                        $('.cart-count').text(response.cart_count);
+                        $('.cart-total-display').html(response.cart_total);
+
+                        // 2. Smoothly remove the row or refresh the list
+                        row.fadeOut(300, function() {
+                            $(this).remove();
+
+                            // If no items left, show the empty cart message
+                            if ($('#mini-cart-list .cart-item-row').length === 0) {
+                                location.reload(); // Hard refresh to show empty state or:
+                                /* $('#mini-cart-list').html(`
+                                    <div class="text-center py-5">
+                                        <i class="fas fa-shopping-basket fa-4x text-light mb-3"></i>
+                                        <p class="text-muted">Your cart is currently empty.</p>
+                                        <button class="btn btn-primary btn-sm rounded-pill px-4" data-bs-dismiss="offcanvas">Start Shopping</button>
+                                    </div>
+                                `);
+                                */
+                            }
+                        });
+
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Removed',
+                                text: 'Item removed from cart',
+                                timer: 1000,
+                                showConfirmButton: false,
+                                toast: true,
+                                position: 'top-end'
+                            });
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    row.css('opacity', '1');
+                    btn.prop('disabled', false).html('<i class="fas fa-trash-alt"></i>');
+                    console.error("Remove Error:", xhr.responseText);
+                }
+            });
+        });
+
+
     });
 
     // Back to top

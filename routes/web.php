@@ -46,6 +46,7 @@ Route::group(['middleware' => ['web', 'locale', 'theme', 'currency']], function 
     // Shopping Cart Routes
     Route::prefix('checkout/cart')->group(function () {
         Route::get('', [CartController::class, 'index'])->name('shop.checkout.cart.index');
+        Route::get('mini-cart', [CartController::class, 'index'])->name('shop.checkout.cart.mini-cart');
         Route::post('add/{id}', [CartController::class, 'add'])->name('shop.cart.add');
         Route::delete('remove/{id}', [CartController::class, 'remove'])->name('shop.cart.remove');
         Route::post('update', [CartController::class, 'update'])->name('shop.cart.update');

@@ -33,7 +33,7 @@ class CartController extends Controller
                 return response()->json(['status' => 'error', 'message' => 'Product not found.'], 404);
             }
 
-            // 2. THE FIX: Pass the $product OBJECT, not the $product->id
+            // 2. Add product to cart
             $cart = Cart::addProduct($product, [
                 'quantity'   => request()->get('quantity', 1),
                 'product_id' => $product->id,
@@ -43,7 +43,7 @@ class CartController extends Controller
                 return response()->json(['status' => 'error', 'message' => $cart['error']], 400);
             }
 
-            // 3. Return updated cart details
+            // 3. Return updated cart details + Rendered HTML for the drawer
             $currentCart = Cart::getCart();
 
             return response()->json([
@@ -51,6 +51,8 @@ class CartController extends Controller
                 'message'    => 'Item added to cart!',
                 'cart_count' => $currentCart ? $currentCart->items_count : 0,
                 'cart_total' => $currentCart ? core()->currency($currentCart->base_grand_total) : 0,
+                // render() converts the blade view into a string of HTML
+                'cart_html'  => view('checkout.mini-cart', ['cart' => $currentCart])->render(),
             ]);
 
         } catch (\Exception $e) {
@@ -64,19 +66,32 @@ class CartController extends Controller
     public function remove($id)
     {
         try {
+            // 1. Remove the item
             Cart::removeItem($id);
 
-            if (request()->ajax()) {
+            // 2. FORCE REFRESH: This is the critical part
+            // It forces Bagisto to recalculate totals and sync the session
+            Cart::collectTotals();
+
+            $currentCart = Cart::getCart();
+
+            // If the cart is now empty, we ensure we return zeros
+            if (! $currentCart || $currentCart->items->count() == 0) {
                 return response()->json([
-                    'status'  => 'success',
-                    'message' => 'Item removed successfully.',
-                    'cart'    => Cart::getCart(),
+                    'status'     => 'success',
+                    'cart_count' => 0,
+                    'cart_total' => core()->currency(0),
                 ]);
             }
 
-            return redirect()->back()->with('success', 'Item removed.');
+            return response()->json([
+                'status'     => 'success',
+                'cart_count' => $currentCart->items_count,
+                'cart_total' => core()->currency($currentCart->base_grand_total),
+            ]);
+
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Could not remove item.');
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
 
