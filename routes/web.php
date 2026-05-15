@@ -3,6 +3,7 @@
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OnepageController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SessionController;
 use Illuminate\Support\Facades\Route;
@@ -36,9 +37,9 @@ Route::group(['middleware' => ['web', 'locale', 'theme', 'currency']], function 
             return 'Profile Page Coming Soon';
         })->name('customer.profile.index');
 
-        Route::get('customer/orders', function () {
-            return 'Orders Page Coming Soon';
-        })->name('customer.orders.index');
+        Route::get('customer/orders', [OrderController::class, 'index'])->name('customer.orders.index');
+        Route::get('customer/order/{id}', [OrderController::class, 'view'])->name('customer.orders.view');
+
 
         Route::delete('logout', [SessionController::class, 'destroy'])->name('customer.session.destroy');
     });

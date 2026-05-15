@@ -232,7 +232,7 @@ class OnepageController extends Controller
 
     public function success()
     {
-        $order = Order::find(session('order_id'));
+        $order = Order::find(session('last_order_id'));
         if (! $order) {
             return redirect()->route('shop.home.index');
         }

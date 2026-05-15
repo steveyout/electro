@@ -108,7 +108,7 @@
                 </div>
 
                 <button type="submit" id="submit-btn" form="checkout-form" class="btn btn-primary w-100 py-3 rounded-pill fw-bold mt-4 shadow-lg text-uppercase">
-                    Pay with M-Pesa
+                    Place Order
                 </button>
 
                 <div class="text-center mt-3">
@@ -129,7 +129,7 @@
         const originalText = btn.innerHTML;
 
         // UI State: Loading
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Initializing STK Push...';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Initializing Order...';
         btn.disabled = true;
 
         const formData = new FormData(this);
