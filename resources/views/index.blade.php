@@ -40,6 +40,37 @@
             </div>
         </div>';
     };
+
+    /**
+     * Define custom promotional banners to map between category sections.
+     */
+    $promoBanners = [
+        [
+            'image' => 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1600',
+            'tag' => 'Featured Collection',
+            'title' => 'Shoot your <span class="text-primary">story</span>, your way',
+            'desc' => 'Discover our newest line of high-end camera bodies, professional setups, and premium glass.',
+            'btn_text' => 'Shop Cameras'
+        ],
+        [
+            'image' => 'https://images.unsplash.com/photo-1511192336575-5a79af67a629?q=80&w=1600',
+            'tag' => 'Premium Gear',
+            'title' => 'Find your <span class="text-primary">rhythm</span> and tone',
+            'desc' => 'Explore world-class effects pedals, premium guitars, and legendary performance instrumentation.',
+            'btn_text' => 'Explore Music Gear'
+        ],
+        [
+            'image' => 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?q=80&w=1600',
+            'tag' => 'Hot Deals',
+            'title' => 'Upgrade your <span class="text-primary">entertainment</span> hub',
+            'desc' => 'Transform your living space with immersive, crystal clear LED Smart displays and audio set-ups.',
+            'btn_text' => 'View Displays'
+        ]
+    ];
+
+    // Shuffle options once per load to ensure varied placement across category sets
+    shuffle($promoBanners);
+    $bannerIndex = 0;
 @endphp
 
 {{-- Main Hero Section --}}
@@ -167,7 +198,7 @@
     </div>
 </div>
 
-{{-- Restored: Services Section --}}
+{{-- Services Section --}}
 <div class="container-fluid px-lg-5 mb-5">
     <div class="row g-0 bg-white border rounded shadow-sm">
         @php
@@ -190,7 +221,7 @@
     </div>
 </div>
 
-{{-- Restored: Featured Products Tabs --}}
+{{-- Featured Products Tabs --}}
 <div class="container-fluid product py-5">
     <div class="container-fluid px-lg-5">
         <div class="tab-class">
@@ -221,8 +252,39 @@
     </div>
 </div>
 
-{{-- Restored: Dynamic Category Sections --}}
+{{-- New Banner added directly between "Our Products" and the Category loops --}}
+@if(isset($promoBanners[$bannerIndex]))
+    @php $topBanner = $promoBanners[$bannerIndex]; @endphp
+    <div class="container-fluid px-lg-5 my-4">
+        <div class="position-relative overflow-hidden rounded-3 shadow-sm custom-category-banner"
+             style="background-image: url('{{ $topBanner['image'] }}');">
+            <div class="banner-gradient-overlay"></div>
+            <div class="position-relative h-100 p-4 p-md-5 d-flex align-items-center dynamic-banner-content">
+                <div class="col-11 col-sm-9 col-md-7 col-lg-5 text-white my-2">
+                    <span class="badge bg-primary rounded-pill px-3 py-2 mb-3 text-uppercase fw-bold tracking-wider small">
+                        {{ $topBanner['tag'] }}
+                    </span>
+                    <h2 class="display-6 fw-bold mb-3 lh-sm text-white">
+                        {!! $topBanner['title'] !!}
+                    </h2>
+                    <p class="lead text-white-50 fs-6 mb-4 d-none d-sm-block">
+                        {{ $topBanner['desc'] }}
+                    </p>
+                    <a href="#all-categories-start" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm text-uppercase">
+                        {{ $topBanner['btn_text'] }} <i class="fas fa-arrow-right ms-2 small"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    @php $bannerIndex++; @endphp
+@endif
+
+<div id="all-categories-start"></div>
+
+{{-- Dynamic Category Sections with Random Interstitial Banners --}}
 @isset($homeCategories)
+    @php $validCategoryCount = 0; @endphp
     @foreach($homeCategories as $category)
         @php
             $categoryProducts = app('Webkul\Product\Repositories\ProductRepository')->getAll([
@@ -231,7 +293,9 @@
         @endphp
 
         @if($categoryProducts->count() > 0)
-            <div class="container-fluid products py-5 {{ $loop->even ? '' : 'bg-light' }}">
+            @php $validCategoryCount++; @endphp
+
+            <div class="container-fluid products py-5 {{ $validCategoryCount % 2 == 0 ? '' : 'bg-light' }}">
                 <div class="container-fluid px-lg-5">
                     <div class="d-flex align-items-center justify-content-between mb-4">
                         <div class="text-start">
@@ -254,6 +318,34 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Render a dynamic inline banner after every 2 active product groups --}}
+            @if($validCategoryCount % 2 == 0 && isset($promoBanners[$bannerIndex]))
+                @php $banner = $promoBanners[$bannerIndex]; @endphp
+                <div class="container-fluid px-lg-5 my-5">
+                    <div class="position-relative overflow-hidden rounded-3 shadow-sm custom-category-banner"
+                         style="background-image: url('{{ $banner['image'] }}');">
+                        <div class="banner-gradient-overlay"></div>
+                        <div class="position-relative h-100 p-4 p-md-5 d-flex align-items-center dynamic-banner-content">
+                            <div class="col-11 col-sm-9 col-md-7 col-lg-5 text-white my-2">
+                                <span class="badge bg-primary rounded-pill px-3 py-2 mb-3 text-uppercase fw-bold tracking-wider small">
+                                    {{ $banner['tag'] }}
+                                </span>
+                                <h2 class="display-6 fw-bold mb-3 lh-sm text-white">
+                                    {!! $banner['title'] !!}
+                                </h2>
+                                <p class="lead text-white-50 fs-6 mb-4 d-none d-sm-block">
+                                    {{ $banner['desc'] }}
+                                </p>
+                                <a href="{{ route('shop.home.category', $category->id) }}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm text-uppercase">
+                                    {{ $banner['btn_text'] }} <i class="fas fa-arrow-right ms-2 small"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @php $bannerIndex++; @endphp
+            @endif
         @endif
     @endforeach
 @endisset
@@ -262,7 +354,6 @@
 
 <script>
     $(document).ready(function(){
-        // Restored Header Carousel with dots
         $(".header-carousel").owlCarousel({
             items: 1,
             autoplay: true,
@@ -292,6 +383,36 @@
 </script>
 
 <style>
+    /* Custom Category Banner Formatting */
+    .custom-category-banner {
+        background-size: cover;
+        background-position: center right;
+        background-repeat: no-repeat;
+        min-height: 320px;
+        height: auto;
+    }
+    .banner-gradient-overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0) 100%);
+        z-index: 1;
+    }
+    .dynamic-banner-content {
+        z-index: 2;
+    }
+    .tracking-wider {
+        letter-spacing: 1px;
+    }
+    @media (max-width: 767.98px) {
+        .custom-category-banner {
+            background-position: center;
+            min-height: 260px;
+        }
+        .banner-gradient-overlay {
+            background: rgba(0, 0, 0, 0.65);
+        }
+    }
+
     /* Styling for the Dots on the Header Carousel */
     .header-carousel .owl-dots {
         position: absolute;
@@ -302,7 +423,6 @@
         gap: 8px;
         z-index: 10;
     }
-
     .header-carousel .owl-dot span {
         width: 12px;
         height: 12px;
@@ -311,7 +431,6 @@
         border-radius: 50%;
         transition: all 0.3s ease;
     }
-
     .header-carousel .owl-dot.active span {
         background: #ff6600 !important;
         width: 25px;

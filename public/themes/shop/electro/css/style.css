@@ -1031,3 +1031,60 @@
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
 }
+
+
+/* Category Promo Banner Styling */
+.category-promo-banner {
+    background-size: cover;
+    background-position: center right;
+    background-repeat: no-repeat;
+    min-height: 280px;
+    height: auto;
+}
+
+/* Enhances readability without flat blocking out the original visual design */
+.banner-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0) 100%);
+    z-index: 1;
+}
+
+.banner-content {
+    z-index: 2;
+}
+
+.banner-title {
+    letter-spacing: -0.5px;
+}
+
+.tracking-wider {
+    letter-spacing: 1px;
+}
+
+/* Button scaling adjustments to align with your theme */
+.banner-btn {
+    transition: all 0.3s ease;
+}
+
+.banner-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+/* Responsive adjustments for mid-size displays and phones */
+@media (max-width: 767.98px) {
+    .category-promo-banner {
+        background-position: center;
+        min-height: 240px;
+    }
+    .banner-overlay {
+        background: rgba(0, 0, 0, 0.6); /* Even dimmer tint for centered phone screens */
+    }
+    .banner-title {
+        font-size: 1.75rem !important;
+    }
+}
