@@ -53,11 +53,11 @@
             'btn_text' => 'Shop Cameras'
         ],
         [
-            'image' => 'https://images.unsplash.com/photo-1511192336575-5a79af67a629?q=80&w=1600',
-            'tag' => 'Premium Gear',
-            'title' => 'Find your <span class="text-primary">rhythm</span> and tone',
-            'desc' => 'Explore world-class effects pedals, premium guitars, and legendary performance instrumentation.',
-            'btn_text' => 'Explore Music Gear'
+            'image' => 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1600',
+            'tag' => 'Premium Mobile & Tech',
+            'title' => 'Power your <span class="text-primary">productivity</span> anywhere',
+            'desc' => 'Upgrade to flagship performance with elite ultra-books, pro laptops, and next-generation smartphones.',
+            'btn_text' => 'Explore Laptops & Phones'
         ],
         [
             'image' => 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?q=80&w=1600',
@@ -282,7 +282,7 @@
 
 <div id="all-categories-start"></div>
 
-{{-- Dynamic Category Sections with Random Interstitial Banners --}}
+{{-- Dynamic Category Sections with Full-Width Headers --}}
 @isset($homeCategories)
     @php $validCategoryCount = 0; @endphp
     @foreach($homeCategories as $category)
@@ -295,20 +295,24 @@
         @if($categoryProducts->count() > 0)
             @php $validCategoryCount++; @endphp
 
-            <div class="container-fluid products py-5 {{ $validCategoryCount % 2 == 0 ? '' : 'bg-light' }}">
-                <div class="container-fluid px-lg-5">
-                    <div class="d-flex align-items-center justify-content-between mb-4">
-                        <div class="text-start">
-                            <h4 class="text-primary border-bottom border-primary border-2 d-inline-block p-2 mb-0" style="font-size: 1rem;">
+            <div class="category-container-block my-4 {{ $validCategoryCount % 2 == 0 ? 'bg-wrap-light' : '' }}">
+                {{-- Full width strip wrapper --}}
+                <div class="category-header-strip py-3 px-3 px-lg-5 mb-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="category-strip-dot"></span>
+                            <h4 class="m-0 text-white text-uppercase fw-bold tracking-wider" style="font-size: 1.05rem; letter-spacing: 0.5px;">
                                 {{ $category->name }}
                             </h4>
-                            <h2 class="display-6 mt-2">Shop {{ $category->name }}</h2>
                         </div>
-                        <a href="{{ route('shop.home.category', $category->id) }}" class="btn btn-outline-primary rounded-pill px-4">
-                            View All <i class="fas fa-arrow-right ms-2"></i>
+                        <a href="{{ route('shop.home.category', $category->id) }}" class="category-strip-link text-white text-decoration-none small fw-bold d-flex align-items-center">
+                            See All <i class="fas fa-chevron-right ms-2" style="font-size: 0.75rem;"></i>
                         </a>
                     </div>
+                </div>
 
+                {{-- Products Grid Content Area --}}
+                <div class="container-fluid px-lg-5 pb-4">
                     <div class="row g-3">
                         @foreach($categoryProducts as $product)
                             <div class="col-6 col-md-4 col-lg-2">
@@ -383,6 +387,40 @@
 </script>
 
 <style>
+    /* Full-Width Category Strip Setup */
+    .category-container-block {
+        width: 100%;
+        position: relative;
+    }
+    .bg-wrap-light {
+        background-color: #f8f9fa;
+    }
+    .category-header-strip {
+        background: #ff6600;
+        background: linear-gradient(90deg, #ff6600 0%, #ff8533 100%);
+        border-bottom: 2px solid rgba(0,0,0,0.05);
+    }
+    /* Alternating layout bar hues based on your custom design parameters */
+    .category-container-block:nth-of-type(even) .category-header-strip {
+        background: #73C2D9;
+        background: linear-gradient(90deg, #53b3ce 0%, #73C2D9 100%);
+    }
+    .category-strip-dot {
+        width: 7px;
+        height: 7px;
+        background-color: #ffffff;
+        border-radius: 50%;
+        display: inline-block;
+        opacity: 0.85;
+    }
+    .category-strip-link {
+        transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+    .category-strip-link:hover {
+        opacity: 0.9;
+        transform: translateX(-2px);
+    }
+
     /* Custom Category Banner Formatting */
     .custom-category-banner {
         background-size: cover;
