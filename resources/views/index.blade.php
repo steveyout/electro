@@ -176,6 +176,7 @@
                             @php
                                 $minPrice = $product->getTypeInstance()->getMinimalPrice();
                                 $displayDesc = \Illuminate\Support\Str::limit(strip_tags($product->short_description), 100);
+                                $pUrl = route('shop.home.product', $product->id);
                             @endphp
                             <div class="header-carousel-item" style="width: 100%;">
                                 <div class="row g-0 align-items-center">
@@ -184,22 +185,23 @@
                                             Save Up To <span class="text-primary fw-bold">{{ core()->currency($product->price - $minPrice) }}</span>
                                         </h5>
                                         <h2 class="fw-bold text-dark mb-3">
-                                            {{ $product->name }}
+                                            <a href="{{ $pUrl }}" class="text-decoration-none text-dark hover-orange">{{ $product->name }}</a>
                                         </h2>
                                         <div class="text-secondary mb-4 d-none d-md-block" style="font-size: 0.85rem;">
                                             {!! $displayDesc !!}
                                         </div>
-                                        <a class="btn btn-primary rounded-pill py-2 px-4 fw-bold"
-                                           href="{{ route('shop.home.product', $product->id) }}">
+                                        <a class="btn btn-primary rounded-pill py-2 px-4 fw-bold" href="{{ $pUrl }}">
                                             Shop Now
                                         </a>
                                     </div>
 
                                     <div class="col-md-5 text-center p-3 position-relative">
-                                        <img src="{{ $product->base_image_url }}"
-                                             class="img-fluid hero-img"
-                                             style="height: 320px; object-fit: contain; width: 100%;"
-                                             alt="{{ $product->name }}">
+                                        <a href="{{ $pUrl }}">
+                                            <img src="{{ $product->base_image_url }}"
+                                                 class="img-fluid hero-img"
+                                                 style="height: 320px; object-fit: contain; width: 100%;"
+                                                 alt="{{ $product->name }}">
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -641,6 +643,7 @@
     }
     .product-item:hover .product-action { opacity: 1; }
     .btn-square { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+    .hover-orange:hover { color: #ff6600 !important; }
 </style>
 
 
