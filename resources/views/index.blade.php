@@ -14,7 +14,7 @@
         $productUrl = route('shop.home.product', $product->id);
 
         return '
-        <div class="product-item rounded border bg-white h-100">
+        <div class="product-item rounded border bg-white h-100 mx-1">
             <div class="position-relative overflow-hidden p-3">
                 ' . ($disc > 0 ? '<div class="discount-badge">' . $disc . '% <br> <span>off</span></div>' : '') . '
                 <img src="' . $product->base_image_url . '" class="img-fluid w-100" style="height:180px; object-fit:contain;" alt="' . $product->name . '">
@@ -68,7 +68,6 @@
         ]
     ];
 
-    // Shuffle options once per load to ensure varied placement across category sets
     shuffle($promoBanners);
     $bannerIndex = 0;
 @endphp
@@ -92,7 +91,6 @@
                                     <i class="fas fa-chevron-right text-muted" style="font-size: 10px;"></i>
                                 </a>
 
-                                {{-- Hover Sub-categories --}}
                                 @if($category->children->count() > 0)
                                     <div class="category-submenu shadow-lg rounded-end">
                                         <div class="p-4">
@@ -172,7 +170,7 @@
     </div>
 </div>
 
-{{-- Category Slider Section --}}
+{{-- Category Circle Slider Section --}}
 <div class="container-fluid px-lg-5 mb-5">
     <div class="category-slider-wrapper p-3 rounded shadow-sm" style="background: #73C2D9;">
         <div class="category-carousel owl-carousel">
@@ -252,7 +250,7 @@
     </div>
 </div>
 
-{{-- New Banner added directly between "Our Products" and the Category loops --}}
+{{-- Dynamic Promo Banner --}}
 @if(isset($promoBanners[$bannerIndex]))
     @php $topBanner = $promoBanners[$bannerIndex]; @endphp
     <div class="container-fluid px-lg-5 my-4">
@@ -282,21 +280,21 @@
 
 <div id="all-categories-start"></div>
 
-{{-- Dynamic Category Sections with Full-Width Headers --}}
+{{-- Dynamic Category Loops --}}
 @isset($homeCategories)
     @php $validCategoryCount = 0; @endphp
     @foreach($homeCategories as $category)
         @php
             $categoryProducts = app('Webkul\Product\Repositories\ProductRepository')->getAll([
                 'category_id' => $category->id,
-            ])->take(6);
+            ])->take(12);
+            $loopId = "cat-slider-" . $category->id;
         @endphp
 
         @if($categoryProducts->count() > 0)
             @php $validCategoryCount++; @endphp
 
             <div class="category-container-block my-4 {{ $validCategoryCount % 2 == 0 ? 'bg-wrap-light' : '' }}">
-                {{-- Full width strip wrapper --}}
                 <div class="category-header-strip py-3 px-3 px-lg-5 mb-4">
                     <div class="d-flex align-items-center justify-content-between">
                         <div class="d-flex align-items-center gap-2">
@@ -305,25 +303,34 @@
                                 {{ $category->name }}
                             </h4>
                         </div>
-                        <a href="{{ route('shop.home.category', $category->id) }}" class="category-strip-link text-white text-decoration-none small fw-bold d-flex align-items-center">
-                            See All <i class="fas fa-chevron-right ms-2" style="font-size: 0.75rem;"></i>
-                        </a>
+
+                        {{-- Controls Container: Perfectly aligned and structured to never overlap --}}
+                        <div class="d-flex align-items-center gap-3 custom-nav-wrapper">
+                            <a href="{{ route('shop.home.category', $category->id) }}" class="category-strip-link text-white text-decoration-none small fw-bold d-flex align-items-center">
+                                See All <i class="fas fa-chevron-right ms-2" style="font-size: 0.75rem;"></i>
+                            </a>
+                            <div class="strip-carousel-controls d-none d-md-flex gap-1">
+                                <button class="btn-strip-nav prev-trigger" data-target="#{{ $loopId }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button class="btn-strip-nav next-trigger" data-target="#{{ $loopId }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {{-- Products Grid Content Area --}}
-                <div class="container-fluid px-lg-5 pb-4">
-                    <div class="row g-3">
+                {{-- Product Slider Track Node --}}
+                <div class="container-fluid px-lg-5 pb-4 position-relative">
+                    <div id="{{ $loopId }}" class="category-products-carousel owl-carousel owl-theme">
                         @foreach($categoryProducts as $product)
-                            <div class="col-6 col-md-4 col-lg-2">
-                                {!! $renderProductCard($product) !!}
-                            </div>
+                            {!! $renderProductCard($product) !!}
                         @endforeach
                     </div>
                 </div>
             </div>
 
-            {{-- Render a dynamic inline banner after every 2 active product groups --}}
             @if($validCategoryCount % 2 == 0 && isset($promoBanners[$bannerIndex]))
                 @php $banner = $promoBanners[$bannerIndex]; @endphp
                 <div class="container-fluid px-lg-5 my-5">
@@ -358,16 +365,19 @@
 
 <script>
     $(document).ready(function(){
+        // Main Hero Carousel
         $(".header-carousel").owlCarousel({
             items: 1,
             autoplay: true,
-            smartSpeed: 2000,
+            smartSpeed: 1500,
             loop: true,
             dots: true,
             nav : false,
-            navText : ['<i class="bi bi-arrow-left"></i>', '<i class="bi bi-arrow-right"></i>']
+            mouseDrag: true,
+            touchDrag: true
         });
 
+        // Top Categories Carousel
         $(".category-carousel").owlCarousel({
             autoplay: true,
             smartSpeed: 1000,
@@ -383,11 +393,45 @@
                 992:{ items:8 }
             }
         });
+
+        // Product Track Initialization (Native Arrow Nodes Completely Disabled)
+        $('.category-products-carousel').each(function() {
+            $(this).owlCarousel({
+                autoplay: true,
+                autoplayTimeout: 4000,
+                autoplayHoverPause: true,
+                smartSpeed: 1200,
+                margin: 15,
+                dots: false,
+                loop: true,
+                nav: false, // Turn off built-in absolute absolute controls
+                mouseDrag: true,
+                touchDrag: true,
+                responsive: {
+                    0: { items: 2 },
+                    576: { items: 3 },
+                    768: { items: 4 },
+                    992: { items: 5 },
+                    1200: { items: 6 }
+                }
+            });
+        });
+
+        // Custom External Header Navigation Directives
+        $(document).on('click', '.prev-trigger', function() {
+            var target = $(this).data('target');
+            $(target).trigger('prev.owl.carousel', [1200]);
+        });
+
+        $(document).on('click', '.next-trigger', function() {
+            var target = $(this).data('target');
+            $(target).trigger('next.owl.carousel', [1200]);
+        });
     });
 </script>
 
 <style>
-    /* Full-Width Category Strip Setup */
+    /* Full-Width Category Block Grid */
     .category-container-block {
         width: 100%;
         position: relative;
@@ -400,7 +444,6 @@
         background: linear-gradient(90deg, #ff6600 0%, #ff8533 100%);
         border-bottom: 2px solid rgba(0,0,0,0.05);
     }
-    /* Alternating layout bar hues based on your custom design parameters */
     .category-container-block:nth-of-type(even) .category-header-strip {
         background: #73C2D9;
         background: linear-gradient(90deg, #53b3ce 0%, #73C2D9 100%);
@@ -419,6 +462,52 @@
     .category-strip-link:hover {
         opacity: 0.9;
         transform: translateX(-2px);
+    }
+
+    /* Fixed Header Navigation Buttons Layout */
+    .custom-nav-wrapper {
+        display: flex;
+        align-items: center;
+    }
+    .strip-carousel-controls {
+        display: flex;
+        align-items: center;
+        border-left: 1px solid rgba(255, 255, 255, 0.3);
+        padding-left: 12px;
+    }
+    .btn-strip-nav {
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #ffffff;
+        width: 28px;
+        height: 28px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .btn-strip-nav:hover {
+        background: #ffffff;
+        color: #ff6600;
+        border-color: #ffffff;
+    }
+    .category-container-block:nth-of-type(even) .btn-strip-nav:hover {
+        color: #53b3ce;
+    }
+    .btn-strip-nav:active {
+        transform: scale(0.95);
+    }
+
+    .category-products-carousel .owl-item {
+        display: flex;
+        justify-content: center;
+    }
+    .category-products-carousel .product-item {
+        width: 100%;
+        min-width: 0;
     }
 
     /* Custom Category Banner Formatting */
@@ -479,7 +568,7 @@
     .category-circle-item { transition: transform 0.3s ease; border: 2px solid white; }
     .category-circle-item:hover { transform: scale(1.05); }
 
-    /* General UI */
+    /* General UI Components */
     .category-sidebar .list-group-item { transition: all 0.2s ease; background: transparent; }
     .category-sidebar .category-item:hover > .list-group-item { color: #ff6600; background: #f8f9fa; padding-left: 1rem; }
     .category-submenu { position: absolute; top: 0; left: 100%; width: 350px; min-height: 100%; background: white; z-index: 1050; display: none; border-left: 1px solid #eee; }
