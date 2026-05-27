@@ -57,8 +57,8 @@
                         // Fetch the correct image URL from the Bagisto category object
                         $image = $category->image_url ?? $category->banner_url ?? asset('vendor/webkul/ui/assets/images/product-placeholder.webp');
 
-                        // Updated to use your new route name
-                        $categoryUrl = route('shop.home.category', $category->id);
+                        // FIXED: Swapped out $category->id for $category->slug to prevent 404 router mismatch
+                        $categoryUrl = route('shop.home.category', $category->slug);
                     @endphp
 
                     <div class="col-lg-6">

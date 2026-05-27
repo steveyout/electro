@@ -56,7 +56,7 @@ class HomeController extends Controller
         // 4. Fetch Reviews
         $reviews = $this->reviewRepository->where([
             'product_id' => $id,
-            'status'     => 'approved'
+            'status'     => 'approved',
         ])->get();
 
         // 5. Fetch Categories
@@ -76,24 +76,32 @@ class HomeController extends Controller
 
     public function category($id)
     {
-        // 1. Fetch the category object (needed for the header/name)
-        $category = $this->categoryRepository->findOrFail($id);
+        // Check if the route passed a clean numeric ID or a string slug
+        if (is_numeric($id)) {
+            $category = $this->categoryRepository->find($id);
+        } else {
+            $category = $this->categoryRepository->findBySlug($id);
+        }
 
-        // 2. Wrap the ID in an array for getAll()
-        // The key MUST be 'category_id'
+        // Double check active category availability context
+        if (! $category || ! $category->status) {
+            abort(404);
+        }
+
+        // Retrieve active category products through standard repository query mapping
         $products = $this->productRepository->getAll([
-            'category_id' => $id
+            'category_id' => $category->id,
         ]);
+
         $featuredProducts = $this->productRepository->getAll([
             'featured' => 1,
-            'status'   => 1
+            'status'   => 1,
         ])->take(3);
 
-        // 3. Get other sidebar data
         $rootCategoryId = core()->getCurrentChannel()->root_category_id;
         $categories = $this->categoryRepository->getVisibleCategoryTree($rootCategoryId);
 
-        return view('category', compact('category', 'products', 'categories','featuredProducts'));
+        return view('category', compact('category', 'products', 'categories', 'featuredProducts'));
     }
 
     public function categories(Request $request)

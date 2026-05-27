@@ -48,9 +48,27 @@
 @endphp
 
 <style>
-    #product-main-carousel { background: #fff; border-radius: 12px; border: 1px solid #eee; overflow: visible !important; }
-    .single-carousel .single-item { display: flex; align-items: center; justify-content: center; aspect-ratio: 1 / 1; }
-    .single-carousel .single-item img { width: 100%; height: 100%; object-fit: contain; padding: 30px; }
+    /* FIXED: Bootstrap Carousel Container Framework with fixed relative constraints */
+    #product-main-carousel {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #eee;
+        overflow: hidden !important;
+        position: relative !important;
+    }
+    .bootstrap-single-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 1 / 1;
+        background: #fff;
+    }
+    .bootstrap-single-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 30px;
+    }
     .price-display .final-price { color: #ff9800 !important; font-size: 2.5rem !important; font-weight: 800 !important; }
 
     .short-desc-container { font-size: 0.95rem; line-height: 1.7; color: #4a4a4a; }
@@ -74,6 +92,33 @@
 
     .btn-whatsapp { background-color: #25D366 !important; color: white !important; border: none !important; font-weight: 600; }
     .btn-loading { opacity: 0.7; pointer-events: none; }
+
+    /* FIXED: Custom Gallery Arrow Overrides for Bootstrap Carousel */
+    .custom-gallery-arrow {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 12% !important;
+        opacity: 0.6;
+        transition: opacity 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+        z-index: 5;
+    }
+    .custom-gallery-arrow:hover {
+        opacity: 1;
+    }
+    .custom-gallery-arrow .carousel-control-prev-icon,
+    .custom-gallery-arrow .carousel-control-next-icon {
+        width: 38px;
+        height: 38px;
+        background-image: none !important; /* Strips default bootstrap background svg icons */
+        transition: transform 0.2s ease;
+    }
+    .custom-gallery-arrow:hover .carousel-control-prev-icon {
+        transform: scale(1.1) translateX(-2px);
+    }
+    .custom-gallery-arrow:hover .carousel-control-next-icon {
+        transform: scale(1.1) translateX(2px);
+    }
 </style>
 
 <div class="container-fluid page-header py-5">
@@ -105,16 +150,39 @@
             <div class="col-lg-9">
                 <div class="row g-4">
                     <div class="col-md-6">
-                        <div id="product-main-carousel" class="single-carousel owl-carousel owl-theme shadow-sm">
-                            @forelse($product->images as $image)
-                                <div class="single-item">
-                                    <img src="{{ $image->url }}" alt="{{ $product->name }}">
-                                </div>
-                            @empty
-                                <div class="single-item">
-                                    <img src="{{ asset('vendor/webkul/ui/assets/images/product-placeholder.webp') }}" alt="Placeholder">
-                                </div>
-                            @endforelse
+                        {{-- FIXED: Changed from Owl Carousel to Native Bootstrap 5 Carousel Framework --}}
+                        <div id="product-main-carousel" class="carousel slide shadow-sm" data-bs-ride="false">
+                            <div class="carousel-inner">
+                                @forelse($product->images as $index => $image)
+                                    <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
+                                        <div class="bootstrap-single-item">
+                                            <img src="{{ $image->url }}" alt="{{ $product->name }}">
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="carousel-item active">
+                                        <div class="bootstrap-single-item">
+                                            <img src="{{ asset('vendor/webkul/ui/assets/images/product-placeholder.webp') }}" alt="Placeholder">
+                                        </div>
+                                    </div>
+                                @endforelse
+                            </div>
+
+                            {{-- Render navigation control buttons only if multiple images exist --}}
+                            @if(count($product->images ?? []) > 1)
+                                <button class="carousel-control-prev custom-gallery-arrow" type="button" data-bs-target="#product-main-carousel" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon d-flex align-items-center justify-content-center rounded-circle bg-dark bg-opacity-25" aria-hidden="true">
+                                        <i class="fas fa-chevron-left text-white" style="font-size: 14px;"></i>
+                                    </span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next custom-gallery-arrow" type="button" data-bs-target="#product-main-carousel" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon d-flex align-items-center justify-content-center rounded-circle bg-dark bg-opacity-25" aria-hidden="true">
+                                        <i class="fas fa-chevron-right text-white" style="font-size: 14px;"></i>
+                                    </span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            @endif
                         </div>
                     </div>
 
@@ -216,14 +284,7 @@
 
 <script>
     $(document).ready(function(){
-        $("#product-main-carousel").owlCarousel({
-            items: 1,
-            loop: true,
-            nav: true,
-            dots: false,
-            navText: ["<i class='fa fa-chevron-left'></i>", "<i class='fa fa-chevron-right'></i>"]
-        });
-
+        // Restored only for the bottom related items grid setup block
         $(".related-carousel").owlCarousel({
             margin: 15,
             loop: true,

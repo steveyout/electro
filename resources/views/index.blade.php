@@ -42,6 +42,24 @@
     };
 
     /**
+     * Pull active promotions set up via Admin Panel -> Marketing >> Promotions >> Catalog Rules
+     */
+    $catalogRuleRepository = app('Webkul\CatalogRule\Repositories\CatalogRuleRepository');
+    $activePromotions = $catalogRuleRepository->scopeQuery(function($query) {
+        return $query->where('status', 1)
+                     ->orderBy('sort_order', 'asc');
+    })->get();
+
+    /**
+     * Right-side placeholder images for marketing promotional rule contexts
+     */
+    $marketingImages = [
+        'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=600',
+        'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=600',
+        'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=600'
+    ];
+
+    /**
      * Define custom promotional banners to map between category sections.
      */
     $promoBanners = [
@@ -116,9 +134,44 @@
 
         {{-- Center: Hero Carousel --}}
         <div class="col-lg-7 col-md-8 col-12">
-            @if($featuredProducts->count() > 0)
-                <div class="shadow-sm rounded overflow-hidden h-100 position-relative" style="background: #F4F6F7;">
-                    <div class="header-carousel owl-carousel py-0">
+            <div class="shadow-sm rounded overflow-hidden h-100 position-relative" style="background: #F4F6F7;">
+                <div class="header-carousel owl-carousel py-0">
+                    @if($activePromotions->count() > 0)
+                        {{-- Context A: Active Marketing Rules --}}
+                        @foreach($activePromotions as $index => $promo)
+                            @php
+                                $promoImage = $marketingImages[$index % count($marketingImages)];
+                            @endphp
+                            <div class="header-carousel-item" style="width: 100%;">
+                                <div class="row g-0 align-items-center">
+                                    <div class="col-md-7 carousel-content text-start p-4 p-lg-5">
+                                        <h5 class="text-muted fw-light mb-2" style="font-size: 0.9rem;">
+                                            Exclusive Offer <span class="text-primary fw-bold">Live</span>
+                                        </h5>
+                                        <h2 class="fw-bold text-dark mb-3">
+                                            {{ $promo->name }}
+                                        </h2>
+                                        @if($promo->description)
+                                            <div class="text-secondary mb-4 d-none d-md-block" style="font-size: 0.85rem;">
+                                                {{ \Illuminate\Support\Str::limit(strip_tags($promo->description), 100) }}
+                                            </div>
+                                        @endif
+                                        <a class="btn btn-primary rounded-pill py-2 px-4 fw-bold" href="#all-categories-start">
+                                            Claim Offer
+                                        </a>
+                                    </div>
+
+                                    <div class="col-md-5 text-center p-3 position-relative">
+                                        <img src="{{ $promoImage }}"
+                                             class="img-fluid hero-img"
+                                             style="height: 320px; object-fit: contain; width: 100%;"
+                                             alt="{{ $promo->name }}">
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    @elseif(isset($featuredProducts) && $featuredProducts->count() > 0)
+                        {{-- Context B: Fallback to Featured Products Track --}}
                         @foreach($featuredProducts as $product)
                             @php
                                 $minPrice = $product->getTypeInstance()->getMinimalPrice();
@@ -151,9 +204,9 @@
                                 </div>
                             </div>
                         @endforeach
-                    </div>
+                    @endif
                 </div>
-            @endif
+            </div>
         </div>
 
         {{-- Right Side: Static Promo Cards --}}
@@ -304,7 +357,7 @@
                             </h4>
                         </div>
 
-                        {{-- Controls Container: Perfectly aligned and structured to never overlap --}}
+                        {{-- Controls Container --}}
                         <div class="d-flex align-items-center gap-3 custom-nav-wrapper">
                             <a href="{{ route('shop.home.category', $category->id) }}" class="category-strip-link text-white text-decoration-none small fw-bold d-flex align-items-center">
                                 See All <i class="fas fa-chevron-right ms-2" style="font-size: 0.75rem;"></i>
@@ -394,7 +447,7 @@
             }
         });
 
-        // Product Track Initialization (Native Arrow Nodes Completely Disabled)
+        // Product Track Initialization
         $('.category-products-carousel').each(function() {
             $(this).owlCarousel({
                 autoplay: true,
@@ -404,7 +457,7 @@
                 margin: 15,
                 dots: false,
                 loop: true,
-                nav: false, // Turn off built-in absolute absolute controls
+                nav: false,
                 mouseDrag: true,
                 touchDrag: true,
                 responsive: {

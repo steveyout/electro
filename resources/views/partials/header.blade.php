@@ -156,7 +156,11 @@
                         <option value="">All Categories</option>
                         @isset($categoryData)
                             @foreach($categoryData as $category)
-                                <option value="{{ is_array($category) ? $category['id'] : $category->id }}" {{ request('category') == (is_array($category) ? $category['id'] : $category->id) ? 'selected' : '' }}>
+                                @php
+                                    $catSlug = is_array($category) ? ($category['slug'] ?? $category['id']) : ($category->slug ?? $category->id);
+                                @endphp
+                                {{-- FIXED: Changed search select options value field to slug parameters to handle form queries natively --}}
+                                <option value="{{ $catSlug }}" {{ request('category') == $catSlug ? 'selected' : '' }}>
                                     {{ is_array($category) ? $category['name'] : $category->name }}
                                 </option>
                             @endforeach
@@ -193,9 +197,13 @@
                     <ul class="list-unstyled mb-0">
                         @if($categoryData && count($categoryData) > 0)
                             @foreach($categoryData as $category)
+                                @php
+                                    $targetSlug = is_array($category) ? ($category['slug'] ?? $category['url_path'] ?? $category['id']) : ($category->slug ?? $category->url_path ?? $category->id);
+                                @endphp
                                 <li class="border-bottom">
                                     <div class="categories-bars-item">
-                                        <a href="{{ url('categories/' . (is_array($category) ? ($category['url_path'] ?? $category['id']) : ($category->url_path ?? $category->id))) }}">
+                                        {{-- FIXED: Swapped out static id paths for explicit routing via named router matching slugs --}}
+                                        <a href="{{ route('shop.home.category', $targetSlug) }}">
                                             {{ is_array($category) ? $category['name'] : $category->name }}
                                         </a>
                                     </div>
@@ -290,7 +298,6 @@
     </div>
 </div>
 
-
 <div class="mobile-bottom-nav d-lg-none">
     <div class="nav-item">
         <a href="{{ route('shop.home.index') }}" class="{{ request()->is('/') ? 'active' : '' }}">
@@ -302,7 +309,6 @@
     <div class="nav-item">
         <a href="{{ route('shop.checkout.cart.index') }}" class="position-relative {{ request()->is('checkout/cart*') ? 'active' : '' }}">
             <i class="fa fa-shopping-cart"></i>
-            {{-- Inline calculation to prevent "Undefined Variable" error --}}
             <span class="nav-cart-badge">
                 {{ Webkul\Checkout\Facades\Cart::getCart() ? Webkul\Checkout\Facades\Cart::getCart()->items_count : 0 }}
             </span>
@@ -324,7 +330,6 @@
         </a>
     </div>
 </div>
-
 
 <a href="https://wa.me/254721966663" class="whatsapp-float-left" target="_blank">
     <i class="fab fa-whatsapp"></i>

@@ -7,6 +7,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SessionController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CustomerProfileDashboardController;
 
 // unauthenticated endpoints
 Route::get('/', [HomeController::class, 'index'])->name('shop.home.index');
@@ -33,10 +34,10 @@ Route::group(['middleware' => ['web', 'locale', 'theme', 'currency']], function 
     // Authenticated Routes
     Route::middleware('auth:customer')->group(function () {
         // missing routes causing your error:
-        Route::get('customer/profile', function () {
-            return 'Profile Page Coming Soon';
-        })->name('customer.profile.index');
-
+        Route::post('profile/avatar', [CustomerProfileDashboardController::class, 'avatar'])->name('customer.profile.avatar');
+        Route::get('customer/profile', [CustomerProfileDashboardController::class, 'index'])->name('customer.profile.index');
+        Route::post('profile/store', [CustomerProfileDashboardController::class, 'store'])
+            ->name('customer.profile.store');
         Route::get('customer/orders', [OrderController::class, 'index'])->name('customer.orders.index');
         Route::get('customer/order/{id}', [OrderController::class, 'view'])->name('customer.orders.view');
 

@@ -96,7 +96,8 @@
                         <ul class="list-unstyled">
                             @foreach($category->children as $sub)
                                 <li class="mb-2">
-                                    <a href="{{ route('shop.home.category', $sub->id) }}" class="text-dark text-decoration-none">
+                                    {{-- FIXED: Updated route parameter from $sub->id to $sub->slug to support Bagisto router matching --}}
+                                    <a href="{{ route('shop.home.category', $sub->slug) }}" class="text-dark text-decoration-none">
                                         <i class="fas fa-chevron-right me-2 small text-primary"></i>{{ $sub->name }}
                                     </a>
                                 </li>
@@ -108,7 +109,6 @@
                 <div class="mt-5 d-none d-lg-block">
                     <h4 class="mb-4 border-bottom pb-2">Top Deals</h4>
                     @php
-                        // FIX: Use the getAll logic that you confirmed works
                         $featured = app('Webkul\Product\Repositories\ProductRepository')->getAll(['featured' => 1])->take(3);
                     @endphp
                     @foreach($featured as $fProduct)
