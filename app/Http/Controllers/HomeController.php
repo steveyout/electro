@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Storage;
 use Webkul\CatalogRule\Repositories\CatalogRuleRepository;
 use Webkul\Category\Repositories\CategoryRepository;
 use Webkul\Product\Repositories\ProductRepository;
@@ -28,14 +29,24 @@ class HomeController extends Controller
         $categoryRepo = app(CategoryRepository::class);
 
         $promotions = $catalogRules->map(function ($rule) use ($categoryRepo) {
-            // Extract Category ID from rule conditions
-            // This targets the category ID usually found in the rule's conditions
-            $categoryId = $rule->conditions_serialized['conditions'][0]['value'] ?? null;
+            // Robustly find the category ID in the serialized conditions
+            $conditions = $rule->conditions_serialized;
+            $categoryId = null;
+
+            if (isset($conditions['conditions'])) {
+                foreach ($conditions['conditions'] as $condition) {
+                    if (isset($condition['attribute']) && $condition['attribute'] == 'category_ids') {
+                        $categoryId = $condition['value'];
+                        break;
+                    }
+                }
+            }
+
             $category = $categoryId ? $categoryRepo->find($categoryId) : null;
 
             return (object) [
                 'title'       => $rule->name,
-                // Use category logo if available, otherwise fallback to the requested image
+                // Ensure Storage::url() works; for local files, ensure storage:link is run
                 'image_url'   => ($category && $category->logo_url)
                     ? Storage::url($category->logo_url)
                     : asset('themes/shop/electro/images/image_b1733d.png'),
