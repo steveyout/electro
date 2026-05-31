@@ -73,8 +73,21 @@ class Payment
      */
     public static function getAdditionalDetails($code)
     {
-        $paymentMethodClass = app(Config::get('payment_methods.'.$code.'.class'));
+        $config = Config::get('payment_methods.'.$code.'.class');
 
-        return $paymentMethodClass->getAdditionalDetails();
+        // Check if the configuration actually exists
+        if (! $config) {
+            return null;
+        }
+
+        $paymentMethodClass = app($config);
+
+        // FIX: Check if the method exists on the class before calling it
+        if (method_exists($paymentMethodClass, 'getAdditionalDetails')) {
+            return $paymentMethodClass->getAdditionalDetails();
+        }
+
+        // Return null if the payment method doesn't have extra details
+        return null;
     }
 }
