@@ -18,39 +18,47 @@ class HomeController extends Controller
 
     public function index(Request $request)
     {
+        // 1. Get existing data
         $products = $this->productRepository->getAll($request->all());
         $featuredProducts = $this->productRepository->getAll(['featured' => 1, 'limit' => 12]);
         $newProducts = $this->productRepository->getAll(['new' => 1, 'limit' => 12]);
 
+        // 2. Fetch Catalog Rules
         $catalogRules = app(CatalogRuleRepository::class)->findWhere(['status' => 1]);
         $categoryRepo = app(CategoryRepository::class);
         $productRepo = app(ProductRepository::class);
 
+        // 3. Map Rules to Promotions
         $promotions = $catalogRules->map(function ($rule) use ($categoryRepo, $productRepo) {
-            $imageUrl = asset('themes/shop/electro/images/image_b1733d.png'); // Default Fallback
+            $imageUrl = asset('themes/shop/electro/images/image_b1733d.png');
             $targetSlug = 'shop';
             $targetType = 'category';
 
-            // 1. Inspect conditions to find the target entity
-            $conditions = $rule->conditions_serialized['conditions'] ?? [];
+            // Use the 'conditions' property as verified by our debug output
+            $conditions = $rule->conditions ?? [];
 
             foreach ($conditions as $condition) {
                 $attribute = $condition['attribute'] ?? '';
                 $value = $condition['value'] ?? null;
 
-                // Scenario A: Condition is a Category
-                if (in_array($attribute, ['category_ids', 'category'])) {
-                    $category = $categoryRepo->find($value);
-                    if ($category && $category->logo_url) {
-                        $imageUrl = Storage::url($category->logo_url);
+                // Handle Category Conditions
+                if ($attribute === 'product|category_ids') {
+                    $catId = is_array($value) ? ($value[0] ?? null) : $value;
+                    $category = $categoryRepo->find($catId);
+
+                    if ($category) {
+                        $imageUrl = $category->logo_url ? Storage::url($category->logo_url) : $imageUrl;
                         $targetSlug = $category->slug;
                         break;
                     }
                 }
 
-                // Scenario B: Condition is a Product (e.g., SKU or Product ID)
-                if (in_array($attribute, ['product_id', 'sku'])) {
-                    $product = ($attribute == 'sku') ? $productRepo->findOneByField('sku', $value) : $productRepo->find($value);
+                // Handle Product Conditions
+                if ($attribute === 'product|sku' || $attribute === 'product|product_id') {
+                    $product = ($attribute === 'product|sku')
+                        ? $productRepo->findOneByField('sku', $value)
+                        : $productRepo->find($value);
+
                     if ($product && $product->base_image_url) {
                         $imageUrl = $product->base_image_url;
                         $targetSlug = $product->url_key;
@@ -66,10 +74,13 @@ class HomeController extends Controller
                 'description' => $rule->description ?? 'Special Offer!',
                 'target_type' => $targetType,
                 'target_slug' => $targetSlug,
-                'subtitle'    => 'Shop Now'
+                'subtitle'    => 'Shop Now',
             ];
         });
 
+
+
+        // 4. Category Trees
         $categories = $this->categoryRepository->getVisibleCategoryTree(core()->getCurrentChannel()->root_category_id);
         $homeCategories = $this->categoryRepository->scopeQuery(function ($query) {
             return $query->where('status', 1)->where('parent_id', core()->getCurrentChannel()->root_category_id)->orderBy('position', 'asc')->limit(4);
