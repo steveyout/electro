@@ -35,7 +35,6 @@ class HomeController extends Controller
             $targetSlug = 'shop';
             $targetType = 'category';
 
-            // Use the 'conditions' property as verified by our debug output
             $conditions = $rule->conditions ?? [];
 
             foreach ($conditions as $condition) {
@@ -48,7 +47,14 @@ class HomeController extends Controller
                     $category = $categoryRepo->find($catId);
 
                     if ($category) {
-                        $imageUrl = $category->logo_url ? Storage::url($category->logo_url) : $imageUrl;
+                        $imagePath = $category->logo_url ?? $category->image;
+
+                        if ($imagePath) {
+                            // Validate if path is already a full URL to prevent double-pathing
+                            $imageUrl = (filter_var($imagePath, FILTER_VALIDATE_URL))
+                                ? $imagePath
+                                : Storage::url($imagePath);
+                        }
                         $targetSlug = $category->slug;
                         break;
                     }
@@ -61,14 +67,15 @@ class HomeController extends Controller
                         : $productRepo->find($value);
 
                     if ($product && $product->base_image_url) {
-                        $imageUrl = $product->base_image_url;
+                        $imageUrl = (filter_var($product->base_image_url, FILTER_VALIDATE_URL))
+                            ? $product->base_image_url
+                            : Storage::url($product->base_image_url);
                         $targetSlug = $product->url_key;
                         $targetType = 'product';
                         break;
                     }
                 }
             }
-
 
             return (object) [
                 'title'       => $rule->name,
@@ -83,7 +90,10 @@ class HomeController extends Controller
         // 4. Category Trees
         $categories = $this->categoryRepository->getVisibleCategoryTree(core()->getCurrentChannel()->root_category_id);
         $homeCategories = $this->categoryRepository->scopeQuery(function ($query) {
-            return $query->where('status', 1)->where('parent_id', core()->getCurrentChannel()->root_category_id)->orderBy('position', 'asc')->limit(4);
+            return $query->where('status', 1)
+                ->where('parent_id', core()->getCurrentChannel()->root_category_id)
+                ->orderBy('position', 'asc')
+                ->limit(4);
         })->get();
 
         return view('index', compact('featuredProducts', 'products', 'newProducts', 'categories', 'homeCategories', 'promotions'));
