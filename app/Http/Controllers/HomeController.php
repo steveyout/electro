@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Webkul\Category\Repositories\CategoryRepository;
 use Webkul\Product\Repositories\ProductRepository;
 use Webkul\Product\Repositories\ProductReviewRepository;
+use Webkul\CatalogRule\Repositories\CatalogRuleRepository;
 
 class HomeController extends Controller
 {
@@ -17,18 +18,20 @@ class HomeController extends Controller
 
     public function index(Request $request)
     {
-        // 1. Get products for the main sections
+        // 1. Get existing data
         $products = $this->productRepository->getAll($request->all());
         $featuredProducts = $this->productRepository->getAll(['featured' => 1, 'limit' => 12]);
         $newProducts = $this->productRepository->getAll(['new' => 1, 'limit' => 12]);
 
-        // 2. Get the Tree (Used for your Navbar/Search dropdown)
+        // 2. Fetch Catalog Rules instead of a non-existent table
+        $promotions = app(CatalogRuleRepository::class)->findWhere(['status' => 1]);
+
+        // 3. Get the Tree
         $categories = $this->categoryRepository->getVisibleCategoryTree(
             core()->getCurrentChannel()->root_category_id
         );
 
-        // 3. Get exactly 4 ACTIVE categories for the homepage carousels
-        // We query the database directly for siblings of the root category
+        // 4. Get active categories
         $homeCategories = $this->categoryRepository->scopeQuery(function ($query) {
             return $query->where('status', 1)
                 ->where('parent_id', core()->getCurrentChannel()->root_category_id)
@@ -36,7 +39,14 @@ class HomeController extends Controller
                 ->limit(4);
         })->get();
 
-        return view('index', compact('featuredProducts', 'products', 'newProducts', 'categories', 'homeCategories'));
+        return view('index', compact(
+            'featuredProducts',
+            'products',
+            'newProducts',
+            'categories',
+            'homeCategories',
+            'promotions'
+        ));
     }
 
     // ... Keep your other methods (product, category, etc.) as they were
