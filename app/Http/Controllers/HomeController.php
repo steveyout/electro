@@ -16,6 +16,10 @@ class HomeController extends Controller
         protected ProductReviewRepository $reviewRepository
     ) {}
 
+    use Webkul\CatalogRule\Repositories\CatalogRuleRepository;
+    use Webkul\Category\Repositories\CategoryRepository;
+    use Illuminate\Support\Facades\Storage;
+
     public function index(Request $request)
     {
         // 1. Get existing data
@@ -23,17 +27,26 @@ class HomeController extends Controller
         $featuredProducts = $this->productRepository->getAll(['featured' => 1, 'limit' => 12]);
         $newProducts = $this->productRepository->getAll(['new' => 1, 'limit' => 12]);
 
-        // 2. Fetch and map Catalog Rules to match your view's expected format
+        // 2. Fetch Catalog Rules and Map Dynamically
         $catalogRules = app(CatalogRuleRepository::class)->findWhere(['status' => 1]);
+        $categoryRepo = app(CategoryRepository::class);
 
-        $promotions = $catalogRules->map(function ($rule) {
+        $promotions = $catalogRules->map(function ($rule) use ($categoryRepo) {
+            // Extract Category ID from rule conditions
+            // This targets the category ID usually found in the rule's conditions
+            $categoryId = $rule->conditions_serialized['conditions'][0]['value'] ?? null;
+            $category = $categoryId ? $categoryRepo->find($categoryId) : null;
+
             return (object) [
                 'title'       => $rule->name,
-                'image_url'   => asset('themes/shop/electro/images/default-banner.png'), // Update with your image path
-                'description' => $rule->description ?? 'Special offer available now!',
+                // Use category logo if available, otherwise fallback to the requested image
+                'image_url'   => ($category && $category->logo_url)
+                    ? Storage::url($category->logo_url)
+                    : asset('themes/shop/electro/images/image_b1733d.png'),
+                'description' => $rule->description ?? 'Explore our latest collection.',
                 'target_type' => 'category',
-                'target_slug' => 'shop',
-                'subtitle'    => 'Catalog Deal',
+                'target_slug' => $category ? $category->slug : 'shop',
+                'subtitle'    => 'Shop Now'
             ];
         });
 
