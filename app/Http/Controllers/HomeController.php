@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Storage;
 use Webkul\CatalogRule\Repositories\CatalogRuleRepository;
 use Webkul\Category\Repositories\CategoryRepository;
 use Webkul\Product\Repositories\ProductRepository;
@@ -68,6 +69,7 @@ class HomeController extends Controller
                 }
             }
 
+
             return (object) [
                 'title'       => $rule->name,
                 'image_url'   => $imageUrl,
@@ -77,8 +79,6 @@ class HomeController extends Controller
                 'subtitle'    => 'Shop Now',
             ];
         });
-
-
 
         // 4. Category Trees
         $categories = $this->categoryRepository->getVisibleCategoryTree(core()->getCurrentChannel()->root_category_id);
