@@ -15,8 +15,8 @@ Route::get('/about', [HomeController::class, 'products'])->name('shop.home.about
 Route::get('/contact', [HomeController::class, 'contact'])->name('shop.home.contact');
 Route::get('/products', [HomeController::class, 'products'])->name('shop.home.products');
 Route::get('/categories', [HomeController::class, 'categories'])->name('shop.home.categories');
-Route::get('/product/{id}', [HomeController::class, 'product'])->name('shop.home.product');
-Route::get('/category/{id}', [HomeController::class, 'category'])->name('shop.home.category');
+Route::get('/product/{slug}', [HomeController::class, 'product'])->name('shop.home.product');
+Route::get('/category/{slug}', [HomeController::class, 'category'])->name('shop.home.category');
 Route::get('/search', [SearchController::class, 'index'])->name('shop.search.index');
 
 // /authenticated endpoints

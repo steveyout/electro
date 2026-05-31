@@ -12,7 +12,8 @@
         $regP = $product->price;
         $disc = ($regP > 0 && $regP > $minP) ? round((($regP - $minP) / $regP) * 100) : 0;
 
-        $productUrl = route('shop.home.product', $product->id);
+        // Use url_key for SEO-friendly slug routing
+        $productUrl = route('shop.home.product', $product->url_key);
 
         return '
         <div class="product-item rounded border bg-white h-100 shadow-sm">
@@ -96,7 +97,6 @@
                         <ul class="list-unstyled">
                             @foreach($category->children as $sub)
                                 <li class="mb-2">
-                                    {{-- FIXED: Updated route parameter from $sub->id to $sub->slug to support Bagisto router matching --}}
                                     <a href="{{ route('shop.home.category', $sub->slug) }}" class="text-dark text-decoration-none">
                                         <i class="fas fa-chevron-right me-2 small text-primary"></i>{{ $sub->name }}
                                     </a>
@@ -116,7 +116,7 @@
                             <img src="{{ $fProduct->base_image_url }}" class="img-fluid rounded" style="width: 50px; height: 50px; object-fit: contain;">
                             <div class="ms-3">
                                 <h6 class="mb-0 text-truncate" style="max-width: 140px;">
-                                    <a href="{{ route('shop.home.product', $fProduct->id) }}" class="text-dark text-decoration-none small fw-bold">{{ $fProduct->name }}</a>
+                                    <a href="{{ route('shop.home.product', $fProduct->url_key) }}" class="text-dark text-decoration-none small fw-bold">{{ $fProduct->name }}</a>
                                 </h6>
                                 <span class="text-primary" style="font-size: 0.85rem;">{{ core()->currency($fProduct->getTypeInstance()->getMinimalPrice()) }}</span>
                             </div>

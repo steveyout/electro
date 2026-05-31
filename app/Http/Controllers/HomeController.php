@@ -100,37 +100,36 @@ class HomeController extends Controller
     }
 
     // ... Keep your other methods (product, category, etc.) as they were
-    public function product($id)
+    public function product($slug)
     {
-        // 1. Fetch the main product
-        $product = $this->productRepository->findOrFail($id);
+        // 1. Find the product_id by searching the EAV table
+        $attributeValue = \DB::table('product_attribute_values')
+            ->join('attributes', 'product_attribute_values.attribute_id', '=', 'attributes.id')
+            ->where('attributes.code', 'url_key') // Confirmed: the slug is stored here
+            ->where('product_attribute_values.text_value', $slug)
+            ->first();
 
-        // 2. Define the missing variable
-        // In Bagisto, this is a property/relationship on the product model
+        if (!$attributeValue) {
+            abort(404);
+        }
+
+        // 2. Load the product using the ID retrieved from the EAV table
+        $product = $this->productRepository->findOrFail($attributeValue->product_id);
+
+        // 3. Continue with your existing logic...
         $relatedProducts = $product->related_products;
-
-        // 3. Fetch Featured Products (using the fix from before)
-        $featuredIds = collect($this->productRepository->getAll(['featured' => 1]))->pluck('id');
-        $featuredProducts = $this->productRepository->findWhereIn('products.id', $featuredIds->toArray());
-
-        // 4. Fetch Reviews
+        $featuredProducts = $this->productRepository->getAll(['featured' => 1, 'limit' => 12]);
         $reviews = $this->reviewRepository->where([
-            'product_id' => $id,
+            'product_id' => $product->id,
             'status'     => 'approved',
         ])->get();
 
-        // 5. Fetch Categories
         $categories = $this->categoryRepository->getVisibleCategoryTree(
             core()->getCurrentChannel()->root_category_id
         );
 
-        // Now compact() will find the variable
         return view('product', compact(
-            'product',
-            'relatedProducts',
-            'featuredProducts',
-            'reviews',
-            'categories'
+            'product', 'relatedProducts', 'featuredProducts', 'reviews', 'categories'
         ));
     }
 

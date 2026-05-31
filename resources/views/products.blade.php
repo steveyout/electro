@@ -11,7 +11,8 @@
         $regP = $product->price;
         $disc = ($regP > 0) ? round((($regP - $minP) / $regP) * 100) : 0;
 
-        $productUrl = route('shop.home.product', $product->id);
+        // FIXED: Using url_key for SEO-friendly slug routing
+        $productUrl = route('shop.home.product', $product->url_key);
 
         return '
         <div class="product-item rounded border bg-white h-100">
@@ -95,6 +96,7 @@
                             <img src="{{ $fProduct->base_image_url }}" class="img-fluid rounded" style="width: 60px; height: 60px; object-fit: contain;">
                             <div class="ms-3">
                                 <h6 class="mb-0 text-truncate" style="max-width: 150px;">
+                                    {{-- FIXED: Changed id to url_key --}}
                                     <a href="{{ route('shop.home.product', $fProduct->url_key) }}" class="text-dark text-decoration-none">{{ $fProduct->name }}</a>
                                 </h6>
                                 <span class="text-primary fw-bold" style="font-size: 0.9rem;">{{ core()->currency($fProduct->getTypeInstance()->getMinimalPrice()) }}</span>
@@ -144,7 +146,7 @@
 @include('partials.footer')
 
 <style>
-    /* Card Specific Styles to match Index exactly */
+    /* Card Specific Styles */
     .product-item img { transition: transform 0.5s ease; }
     .product-item:hover img { transform: scale(1.08); }
 

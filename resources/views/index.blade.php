@@ -11,7 +11,7 @@
         $regP = $product->price;
         $disc = ($regP > 0) ? round((($regP - $minP) / $regP) * 100) : 0;
 
-        $productUrl = route('shop.home.product', $product->id);
+        $productUrl = route('shop.home.product', $product->url_key);
 
         return '
         <div class="product-item rounded border bg-white h-100 mx-1">
@@ -133,9 +133,16 @@
                                 $image = $isPromo ? $item->image_url : $item->base_image_url;
                                 $desc = $isPromo ? $item->description : \Illuminate\Support\Str::limit(strip_tags($item->short_description ?? ''), 100);
 
-                                $link = $isPromo
-                                    ? route('shop.home.category', $item->target_slug)
-                                    : route('shop.home.product', $item->id);
+                                // Dynamic Link Logic using your confirmed route names
+                                if ($isPromo) {
+                                    $link = ($item->target_type === 'product')
+                                        ? route('shop.home.product', $item->target_slug)
+                                        :route('shop.home.category', $item->target_slug);
+
+                                } else {
+                                    // Fallback for non-promotional items
+                                    $link = route('shop.home.product', $item->url_key);
+                                }
                             @endphp
 
                             <div class="header-carousel-item" style="width: 100%;">
