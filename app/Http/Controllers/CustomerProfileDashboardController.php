@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Webkul\Customer\Repositories\CustomerAddressRepository;
 use Webkul\Customer\Repositories\CustomerRepository;
@@ -29,7 +30,7 @@ class CustomerProfileDashboardController extends Controller
     {
         $customer = auth()->guard('customer')->user();
 
-        if (!$customer) {
+        if (! $customer) {
             return redirect()->route('customer.session.index');
         }
 
@@ -43,19 +44,18 @@ class CustomerProfileDashboardController extends Controller
     /**
      * Handle Async Customer Profile Picture Updates.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function avatar(Request $request)
     {
         $customer = auth()->guard('customer')->user();
 
-        if (!$customer) {
+        if (! $customer) {
             return response()->json(['success' => false, 'message' => 'Unauthorized action context.'], 401);
         }
 
         $request->validate([
-            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048'
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         if ($request->hasFile('avatar')) {
@@ -64,7 +64,7 @@ class CustomerProfileDashboardController extends Controller
                 Storage::disk('public')->delete($customer->image);
             }
 
-            $path = $request->file('avatar')->store('customer/avatar/' . $customer->id, 'public');
+            $path = $request->file('avatar')->store('customer/avatar/'.$customer->id, 'public');
 
             // Save straight to your database field 'image'
             $customer->image = $path;
@@ -78,7 +78,7 @@ class CustomerProfileDashboardController extends Controller
             return response()->json([
                 'success'    => true,
                 'message'    => 'Profile picture updated successfully!',
-                'avatar_url' => asset('storage/' . $path)
+                'avatar_url' => asset('storage/'.$path),
             ]);
         }
 
@@ -92,7 +92,7 @@ class CustomerProfileDashboardController extends Controller
     {
         $customer = auth()->guard('customer')->user();
 
-        if (!$customer) {
+        if (! $customer) {
             return redirect()->route('customer.session.index');
         }
 
@@ -143,5 +143,45 @@ class CustomerProfileDashboardController extends Controller
         session()->flash('success', trans('shop::app.customer.account.profile.index.edit-success'));
 
         return redirect()->back();
+    }
+
+    public function passwordView()
+    {
+        $customer = auth()->guard('customer')->user();
+
+        if (! $customer) {
+            return redirect()->route('customer.session.index');
+        }
+
+        $customer->default_address = $customer->addresses()
+            ->where('default_address', 1)
+            ->first();
+
+        return view('customer.password', compact('customer'));
+    }
+
+    /**
+     * Update the customer's password.
+     */
+    public function updatePassword(Request $request)
+    {
+        // 1. Validate the input
+        $request->validate([
+            'oldpassword' => 'required',
+            'password'    => 'required|confirmed|min:6',
+        ]);
+
+        $customer = auth()->guard('customer')->user();
+
+        // 2. Check if the current password matches
+        if (! Hash::check($request->oldpassword, $customer->password)) {
+            return back()->withErrors(['oldpassword' => 'The provided current password does not match our records.']);
+        }
+
+        // 3. Update the password
+        $customer->password = Hash::make($request->password);
+        $customer->save();
+
+        return back()->with('success', 'Your password has been updated successfully.');
     }
 }

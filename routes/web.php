@@ -40,6 +40,8 @@ Route::group(['middleware' => ['web', 'locale', 'theme', 'currency']], function 
             ->name('customer.profile.store');
         Route::get('customer/orders', [OrderController::class, 'index'])->name('customer.orders.index');
         Route::get('customer/order/{id}', [OrderController::class, 'view'])->name('customer.orders.view');
+        Route::get('customer/profile/password', [CustomerProfileDashboardController::class, 'passwordView'])->name('customer.profile.update.password');
+        Route::post('customer/profile/password', [CustomerProfileDashboardController::class, 'updatePassword'])->name('customer.profile.update.password');
 
 
         Route::delete('logout', [SessionController::class, 'destroy'])->name('customer.session.destroy');

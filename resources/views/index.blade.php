@@ -41,48 +41,30 @@
         </div>';
     };
 
-    /**
-     * Pull active promotions set up via Admin Panel -> Marketing >> Promotions >> Catalog Rules
-     */
-    $catalogRuleRepository = app('Webkul\CatalogRule\Repositories\CatalogRuleRepository');
-    $activePromotions = $catalogRuleRepository->scopeQuery(function($query) {
-        return $query->where('status', 1)
-                     ->orderBy('sort_order', 'asc');
-    })->get();
-
-    /**
-     * Right-side placeholder images for marketing promotional rule contexts
-     */
-    $marketingImages = [
-        'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=600',
-        'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=600',
-        'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=600'
-    ];
-
-    /**
-     * Define custom promotional banners to map between category sections.
-     */
     $promoBanners = [
         [
             'image' => 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1600',
             'tag' => 'Featured Collection',
             'title' => 'Shoot your <span class="text-primary">story</span>, your way',
             'desc' => 'Discover our newest line of high-end camera bodies, professional setups, and premium glass.',
-            'btn_text' => 'Shop Cameras'
+            'btn_text' => 'Shop Cameras',
+            'url' => route('shop.home.category', 'digital-cameras-and-lenses')
         ],
         [
             'image' => 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1600',
             'tag' => 'Premium Mobile & Tech',
             'title' => 'Power your <span class="text-primary">productivity</span> anywhere',
-            'desc' => 'Upgrade to flagship performance with elite ultra-books, pro laptops, and next-generation smartphones.',
-            'btn_text' => 'Explore Laptops & Phones'
+            'desc' => 'Upgrade to flagship performance with premium next-generation smartphones and wireless accessories.',
+            'btn_text' => 'Explore Phones',
+            'url' => route('shop.home.category', 'apple-products')
         ],
         [
             'image' => 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?q=80&w=1600',
             'tag' => 'Hot Deals',
             'title' => 'Upgrade your <span class="text-primary">entertainment</span> hub',
             'desc' => 'Transform your living space with immersive, crystal clear LED Smart displays and audio set-ups.',
-            'btn_text' => 'View Displays'
+            'btn_text' => 'View Displays',
+            'url' => route('shop.home.category', 'televisions')
         ]
     ];
 
@@ -100,7 +82,7 @@
                     @isset($homeCategories)
                         @foreach($homeCategories as $category)
                             <div class="category-item border-bottom">
-                                <a href="{{ route('shop.home.category', $category->id) }}"
+                                <a href="{{ route('shop.home.category', $category->slug) }}"
                                    class="list-group-item list-group-item-action border-0 py-2 d-flex justify-content-between align-items-center">
                                     <span class="small">
                                         <i class="fas fa-list-ul me-2 text-muted" style="width: 15px;"></i>
@@ -116,7 +98,7 @@
                                             <div class="row">
                                                 @foreach($category->children as $child)
                                                     <div class="col-6 mb-2">
-                                                        <a href="{{ route('shop.home.category', $child->id) }}" class="text-decoration-none text-dark small hover-orange">
+                                                        <a href="{{ route('shop.home.category', $child->slug) }}" class="text-decoration-none text-dark small hover-orange">
                                                             {{ $child->name }}
                                                         </a>
                                                     </div>
@@ -134,81 +116,62 @@
 
         {{-- Center: Hero Carousel --}}
         <div class="col-lg-7 col-md-8 col-12">
-            <div class="shadow-sm rounded overflow-hidden h-100 position-relative" style="background: #F4F6F7;">
-                <div class="header-carousel owl-carousel py-0">
-                    @if($activePromotions->count() > 0)
-                        {{-- Context A: Active Marketing Rules --}}
-                        @foreach($activePromotions as $index => $promo)
-                            @php
-                                $promoImage = $marketingImages[$index % count($marketingImages)];
-                            @endphp
-                            <div class="header-carousel-item" style="width: 100%;">
-                                <div class="row g-0 align-items-center">
-                                    <div class="col-md-7 carousel-content text-start p-4 p-lg-5">
-                                        <h5 class="text-muted fw-light mb-2" style="font-size: 0.9rem;">
-                                            Exclusive Offer <span class="text-primary fw-bold">Live</span>
-                                        </h5>
-                                        <h2 class="fw-bold text-dark mb-3">
-                                            {{ $promo->name }}
-                                        </h2>
-                                        @if($promo->description)
-                                            <div class="text-secondary mb-4 d-none d-md-block" style="font-size: 0.85rem;">
-                                                {{ \Illuminate\Support\Str::limit(strip_tags($promo->description), 100) }}
-                                            </div>
-                                        @endif
-                                        <a class="btn btn-primary rounded-pill py-2 px-4 fw-bold" href="#all-categories-start">
-                                            Claim Offer
-                                        </a>
-                                    </div>
+            @php
+                // Determine if we use manual promotions or fall back to featured products
+                $carouselItems = (isset($promotions) && $promotions->count() > 0) ? $promotions : $featuredProducts;
+            @endphp
 
-                                    <div class="col-md-5 text-center p-3 position-relative">
-                                        <img src="{{ $promoImage }}"
-                                             class="img-fluid hero-img"
-                                             style="height: 320px; object-fit: contain; width: 100%;"
-                                             alt="{{ $promo->name }}">
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    @elseif(isset($featuredProducts) && $featuredProducts->count() > 0)
-                        {{-- Context B: Fallback to Featured Products Track --}}
-                        @foreach($featuredProducts as $product)
+            @if($carouselItems->count() > 0)
+                <div class="shadow-sm rounded overflow-hidden h-100 position-relative" style="background: #F4F6F7;">
+                    <div class="header-carousel owl-carousel py-0">
+                        @foreach($carouselItems as $item)
                             @php
-                                $minPrice = $product->getTypeInstance()->getMinimalPrice();
-                                $displayDesc = \Illuminate\Support\Str::limit(strip_tags($product->short_description), 100);
-                                $pUrl = route('shop.home.product', $product->id);
+                                // Check if the item is a promotion or a product object
+                                $isPromo = isset($item->target_type); // Adjust this check based on your DB schema
+
+                                // Get details based on type
+                                $name = $isPromo ? $item->title : $item->name;
+                                $image = $isPromo ? $item->image_url : $item->base_image_url;
+                                $priceDisplay = $isPromo ? $item->subtitle : core()->currency($item->getTypeInstance()->getMinimalPrice());
+                                $desc = $isPromo ? $item->description : \Illuminate\Support\Str::limit(strip_tags($item->short_description), 100);
+
+                                // Dynamic Link Generation
+                                $link = $isPromo
+                                    ? ($item->target_type === 'category' ? route('shop.home.category', $item->target_slug) : route('shop.home.product', $item->product_id))
+                                    : route('shop.home.product', $item->id);
                             @endphp
+
                             <div class="header-carousel-item" style="width: 100%;">
                                 <div class="row g-0 align-items-center">
                                     <div class="col-md-7 carousel-content text-start p-4 p-lg-5">
-                                        <h5 class="text-muted fw-light mb-2" style="font-size: 0.9rem;">
-                                            Save Up To <span class="text-primary fw-bold">{{ core()->currency($product->price - $minPrice) }}</span>
-                                        </h5>
+                                        @if(!$isPromo)
+                                            <h5 class="text-muted fw-light mb-2" style="font-size: 0.9rem;">
+                                                Save Up To <span class="text-primary fw-bold">{{ core()->currency($item->price - $item->getTypeInstance()->getMinimalPrice()) }}</span>
+                                            </h5>
+                                        @endif
                                         <h2 class="fw-bold text-dark mb-3">
-                                            <a href="{{ $pUrl }}" class="text-decoration-none text-dark hover-orange">{{ $product->name }}</a>
+                                            {{ $name }}
                                         </h2>
                                         <div class="text-secondary mb-4 d-none d-md-block" style="font-size: 0.85rem;">
-                                            {!! $displayDesc !!}
+                                            {!! $desc !!}
                                         </div>
-                                        <a class="btn btn-primary rounded-pill py-2 px-4 fw-bold" href="{{ $pUrl }}">
+                                        <a class="btn btn-primary rounded-pill py-2 px-4 fw-bold" href="{{ $link }}">
                                             Shop Now
                                         </a>
                                     </div>
 
                                     <div class="col-md-5 text-center p-3 position-relative">
-                                        <a href="{{ $pUrl }}">
-                                            <img src="{{ $product->base_image_url }}"
-                                                 class="img-fluid hero-img"
-                                                 style="height: 320px; object-fit: contain; width: 100%;"
-                                                 alt="{{ $product->name }}">
-                                        </a>
+                                        <img src="{{ $image }}"
+                                             class="img-fluid hero-img"
+                                             style="height: 320px; object-fit: contain; width: 100%;"
+                                             alt="{{ $name }}">
                                     </div>
                                 </div>
                             </div>
                         @endforeach
-                    @endif
+                    </div>
                 </div>
-            </div>
+            @endif
         </div>
 
         {{-- Right Side: Static Promo Cards --}}
@@ -231,7 +194,7 @@
         <div class="category-carousel owl-carousel">
             @isset($homeCategories)
                 @foreach($homeCategories as $category)
-                    <a href="{{ route('shop.home.category', $category->id) }}" class="text-decoration-none text-center d-block px-2">
+                    <a href="{{ route('shop.home.category', $category->slug) }}" class="text-decoration-none text-center d-block px-2">
                         <div class="category-circle-item mx-auto mb-2 rounded-circle shadow-sm {{ !$category->logo_url ? 'bg-white d-flex align-items-center justify-content-center' : '' }}"
                              style="width: 100px; height: 100px;
                                     @if($category->logo_url)
@@ -291,11 +254,10 @@
                 @php $tabs = ['tab-1' => $products, 'tab-2' => $newProducts]; @endphp
                 @foreach($tabs as $id => $collection)
                     <div id="{{ $id }}" class="tab-pane fade show p-0 {{ $loop->first ? 'active' : '' }}">
-                        <div class="row g-3">
+                        {{-- UPDATED: Added class 'category-products-carousel' and unique ID for slider initialization --}}
+                        <div id="slider-{{ $id }}" class="category-products-carousel owl-carousel owl-theme">
                             @foreach($collection->take(12) as $product)
-                                <div class="col-6 col-md-4 col-lg-2">
-                                    {!! $renderProductCard($product) !!}
-                                </div>
+                                {!! $renderProductCard($product) !!}
                             @endforeach
                         </div>
                     </div>
@@ -305,7 +267,7 @@
     </div>
 </div>
 
-{{-- Dynamic Promo Banner --}}
+{{-- Dynamic Promo Banner (Top Banner) --}}
 @if(isset($promoBanners[$bannerIndex]))
     @php $topBanner = $promoBanners[$bannerIndex]; @endphp
     <div class="container-fluid px-lg-5 my-4">
@@ -323,7 +285,7 @@
                     <p class="lead text-white-50 fs-6 mb-4 d-none d-sm-block">
                         {{ $topBanner['desc'] }}
                     </p>
-                    <a href="#all-categories-start" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm text-uppercase">
+                    <a href="{{ $topBanner['url'] }}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm text-uppercase">
                         {{ $topBanner['btn_text'] }} <i class="fas fa-arrow-right ms-2 small"></i>
                     </a>
                 </div>
@@ -361,7 +323,7 @@
 
                         {{-- Controls Container --}}
                         <div class="d-flex align-items-center gap-3 custom-nav-wrapper">
-                            <a href="{{ route('shop.home.category', $category->id) }}" class="category-strip-link text-white text-decoration-none small fw-bold d-flex align-items-center">
+                            <a href="{{ route('shop.home.category', $category->slug) }}" class="category-strip-link text-white text-decoration-none small fw-bold d-flex align-items-center">
                                 See All <i class="fas fa-chevron-right ms-2" style="font-size: 0.75rem;"></i>
                             </a>
                             <div class="strip-carousel-controls d-none d-md-flex gap-1">
@@ -386,6 +348,7 @@
                 </div>
             </div>
 
+            {{-- In-between section promo banners mapping --}}
             @if($validCategoryCount % 2 == 0 && isset($promoBanners[$bannerIndex]))
                 @php $banner = $promoBanners[$bannerIndex]; @endphp
                 <div class="container-fluid px-lg-5 my-5">
@@ -403,7 +366,7 @@
                                 <p class="lead text-white-50 fs-6 mb-4 d-none d-sm-block">
                                     {{ $banner['desc'] }}
                                 </p>
-                                <a href="{{ route('shop.home.category', $category->id) }}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm text-uppercase">
+                                <a href="{{ $banner['url'] }}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm text-uppercase">
                                     {{ $banner['btn_text'] }} <i class="fas fa-arrow-right ms-2 small"></i>
                                 </a>
                             </div>
@@ -482,6 +445,13 @@
             var target = $(this).data('target');
             $(target).trigger('next.owl.carousel', [1200]);
         });
+
+        // Add this inside your $(document).ready function
+        $('a[data-bs-toggle="pill"]').on('shown.bs.tab', function (e) {
+            $('.category-products-carousel').trigger('refresh.owl.carousel');
+        });
+
+
     });
 </script>
 
@@ -643,7 +613,6 @@
     }
     .product-item:hover .product-action { opacity: 1; }
     .btn-square { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
-    .hover-orange:hover { color: #ff6600 !important; }
 </style>
 
 

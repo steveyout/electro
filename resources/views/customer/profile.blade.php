@@ -76,7 +76,7 @@
                             <i class="fas fa-shopping-bag text-muted" style="width: 20px;"></i>
                             <span class="small fw-semibold">Order History</span>
                         </a>
-                        <a href="#" class="list-group-item list-group-item-action border-0 py-3 rounded-3 d-flex align-items-center gap-3">
+                        <a href="{{route('customer.profile.update.password')}}" class="list-group-item list-group-item-action border-0 py-3 rounded-3 d-flex align-items-center gap-3">
                             <i class="fas fa-shield-alt text-muted" style="width: 20px;"></i>
                             <span class="small fw-semibold">Password & Security</span>
                         </a>
@@ -87,6 +87,7 @@
                         </a>
                         <form id="customer-logout-form" action="{{ route('customer.session.destroy') }}" method="POST" style="display: none;">
                             @csrf
+                            @method('DELETE')
                         </form>
                     </div>
                 </div>
