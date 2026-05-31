@@ -16,10 +16,6 @@ class HomeController extends Controller
         protected ProductReviewRepository $reviewRepository
     ) {}
 
-    use Webkul\CatalogRule\Repositories\CatalogRuleRepository;
-    use Webkul\Category\Repositories\CategoryRepository;
-    use Illuminate\Support\Facades\Storage;
-
     public function index(Request $request)
     {
         // 1. Get existing data
@@ -46,7 +42,7 @@ class HomeController extends Controller
                 'description' => $rule->description ?? 'Explore our latest collection.',
                 'target_type' => 'category',
                 'target_slug' => $category ? $category->slug : 'shop',
-                'subtitle'    => 'Shop Now'
+                'subtitle'    => 'Shop Now',
             ];
         });
 
