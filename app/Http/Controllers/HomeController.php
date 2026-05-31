@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Webkul\CatalogRule\Repositories\CatalogRuleRepository;
 use Webkul\Category\Repositories\CategoryRepository;
 use Webkul\Product\Repositories\ProductRepository;
 use Webkul\Product\Repositories\ProductReviewRepository;
-use Webkul\CatalogRule\Repositories\CatalogRuleRepository;
 
 class HomeController extends Controller
 {
@@ -23,8 +23,19 @@ class HomeController extends Controller
         $featuredProducts = $this->productRepository->getAll(['featured' => 1, 'limit' => 12]);
         $newProducts = $this->productRepository->getAll(['new' => 1, 'limit' => 12]);
 
-        // 2. Fetch Catalog Rules instead of a non-existent table
-        $promotions = app(CatalogRuleRepository::class)->findWhere(['status' => 1]);
+        // 2. Fetch and map Catalog Rules to match your view's expected format
+        $catalogRules = app(CatalogRuleRepository::class)->findWhere(['status' => 1]);
+
+        $promotions = $catalogRules->map(function ($rule) {
+            return (object) [
+                'title'       => $rule->name,
+                'image_url'   => asset('themes/shop/electro/images/default-banner.png'), // Update with your image path
+                'description' => $rule->description ?? 'Special offer available now!',
+                'target_type' => 'category',
+                'target_slug' => 'shop',
+                'subtitle'    => 'Catalog Deal',
+            ];
+        });
 
         // 3. Get the Tree
         $categories = $this->categoryRepository->getVisibleCategoryTree(

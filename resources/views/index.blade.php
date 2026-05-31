@@ -117,8 +117,8 @@
         {{-- Center: Hero Carousel --}}
         <div class="col-lg-7 col-md-8 col-12">
             @php
-                // Determine if we use manual promotions or fall back to featured products
-                $carouselItems = (isset($promotions) && $promotions->count() > 0) ? $promotions : $featuredProducts;
+                // Prioritize mapped promotions, fall back to featured products
+                $carouselItems = (isset($promotions) && $promotions->isNotEmpty()) ? $promotions : $featuredProducts;
             @endphp
 
             @if($carouselItems->count() > 0)
@@ -126,45 +126,32 @@
                     <div class="header-carousel owl-carousel py-0">
                         @foreach($carouselItems as $item)
                             @php
-                                // Check if the item is a promotion or a product object
-                                $isPromo = isset($item->target_type); // Adjust this check based on your DB schema
+                                // Check if it's our mapped promotion object
+                                $isPromo = property_exists($item, 'target_type');
 
-                                // Get details based on type
                                 $name = $isPromo ? $item->title : $item->name;
                                 $image = $isPromo ? $item->image_url : $item->base_image_url;
-                                $priceDisplay = $isPromo ? $item->subtitle : core()->currency($item->getTypeInstance()->getMinimalPrice());
-                                $desc = $isPromo ? $item->description : \Illuminate\Support\Str::limit(strip_tags($item->short_description), 100);
+                                $desc = $isPromo ? $item->description : \Illuminate\Support\Str::limit(strip_tags($item->short_description ?? ''), 100);
 
-                                // Dynamic Link Generation
                                 $link = $isPromo
-                                    ? ($item->target_type === 'category' ? route('shop.home.category', $item->target_slug) : route('shop.home.product', $item->product_id))
+                                    ? route('shop.home.category', $item->target_slug)
                                     : route('shop.home.product', $item->id);
                             @endphp
 
                             <div class="header-carousel-item" style="width: 100%;">
                                 <div class="row g-0 align-items-center">
                                     <div class="col-md-7 carousel-content text-start p-4 p-lg-5">
-                                        @if(!$isPromo)
+                                        @if(!$isPromo && method_exists($item, 'getTypeInstance'))
                                             <h5 class="text-muted fw-light mb-2" style="font-size: 0.9rem;">
                                                 Save Up To <span class="text-primary fw-bold">{{ core()->currency($item->price - $item->getTypeInstance()->getMinimalPrice()) }}</span>
                                             </h5>
                                         @endif
-                                        <h2 class="fw-bold text-dark mb-3">
-                                            {{ $name }}
-                                        </h2>
-                                        <div class="text-secondary mb-4 d-none d-md-block" style="font-size: 0.85rem;">
-                                            {!! $desc !!}
-                                        </div>
-                                        <a class="btn btn-primary rounded-pill py-2 px-4 fw-bold" href="{{ $link }}">
-                                            Shop Now
-                                        </a>
+                                        <h2 class="fw-bold text-dark mb-3">{{ $name }}</h2>
+                                        <div class="text-secondary mb-4 d-none d-md-block" style="font-size: 0.85rem;">{!! $desc !!}</div>
+                                        <a class="btn btn-primary rounded-pill py-2 px-4 fw-bold" href="{{ $link }}">Shop Now</a>
                                     </div>
-
-                                    <div class="col-md-5 text-center p-3 position-relative">
-                                        <img src="{{ $image }}"
-                                             class="img-fluid hero-img"
-                                             style="height: 320px; object-fit: contain; width: 100%;"
-                                             alt="{{ $name }}">
+                                    <div class="col-md-5 text-center p-3">
+                                        <img src="{{ $image }}" class="img-fluid hero-img" style="height: 320px; object-fit: contain; width: 100%;" alt="{{ $name }}">
                                     </div>
                                 </div>
                             </div>
